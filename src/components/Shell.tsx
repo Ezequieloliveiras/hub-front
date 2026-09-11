@@ -13,6 +13,7 @@ import {
   ListItemIcon,
   ListItemText,
   Toolbar,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import {
@@ -62,6 +63,10 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     }
     setReady(true);
   }, [router]);
+  const logout = () => {
+    localStorage.removeItem('token');
+    router.replace('/login');
+  };
   if (!ready) return null;
   return (
     <Box sx={{ display: 'flex' }}>
@@ -82,7 +87,11 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           <IconButton>
             <Notifications />
           </IconButton>
-          <Avatar sx={{ width: 32, height: 32, ml: 1, bgcolor: 'primary.main' }}>DS</Avatar>
+          <Tooltip title="Sair">
+            <IconButton aria-label="Sair" onClick={logout} sx={{ ml: 0.5, p: 0.5 }}>
+              <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>DS</Avatar>
+            </IconButton>
+          </Tooltip>
         </Toolbar>
       </AppBar>
       <Drawer
