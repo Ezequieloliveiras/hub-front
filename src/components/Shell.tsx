@@ -6,12 +6,15 @@ import {
   AppBar,
   Avatar,
   Box,
+  Divider,
   Drawer,
   IconButton,
   List,
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Menu as ProfileMenu,
+  MenuItem,
   Toolbar,
   Tooltip,
   Typography,
@@ -24,9 +27,11 @@ import {
   AccountBalance,
   Notifications,
   Hub,
+  LogoutOutlined,
+  Menu as MenuIcon,
+  PersonOutline,
   Settings,
   Warning,
-  Menu,
 } from '@mui/icons-material';
 const items = [
   ['Dashboard', '/', Dashboard],
@@ -55,6 +60,7 @@ function Nav() {
 export default function Shell({ children }: { children: React.ReactNode }) {
   const [w, setW] = useState(false),
     [ready, setReady] = useState(false),
+    [profileAnchor, setProfileAnchor] = useState<HTMLElement | null>(null),
     router = useRouter();
   useEffect(() => {
     if (!localStorage.getItem('token')) {
@@ -67,6 +73,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('token');
     router.replace('/login');
   };
+  const closeProfile = () => setProfileAnchor(null);
   if (!ready) return null;
   return (
     <Box sx={{ display: 'flex' }}>
@@ -78,7 +85,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
       >
         <Toolbar>
           <IconButton sx={{ display: { md: 'none' } }} onClick={() => setW(true)}>
-            <Menu />
+            <MenuIcon />
           </IconButton>
           <Typography sx={{ fontWeight: 800, color: 'primary.main', fontSize: 20 }}>
             seller pulse
@@ -87,11 +94,43 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           <IconButton>
             <Notifications />
           </IconButton>
-          <Tooltip title="Sair">
-            <IconButton aria-label="Sair" onClick={logout} sx={{ ml: 0.5, p: 0.5 }}>
+          <Tooltip title="Perfil e conta">
+            <IconButton
+              aria-label="Abrir menu de perfil"
+              onClick={(event) => setProfileAnchor(event.currentTarget)}
+              sx={{ ml: 0.5, p: 0.5 }}
+            >
               <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>DS</Avatar>
             </IconButton>
           </Tooltip>
+          <ProfileMenu
+            anchorEl={profileAnchor}
+            open={Boolean(profileAnchor)}
+            onClose={closeProfile}
+            slotProps={{ paper: { elevation: 3, sx: { mt: 1, minWidth: 220, borderRadius: 2 } } }}
+          >
+            <Box sx={{ px: 2, py: 1.25 }}>
+              <Typography fontWeight={700} variant="body2">
+                Demo Seller
+              </Typography>
+              <Typography className="muted" variant="caption">
+                Minha conta
+              </Typography>
+            </Box>
+            <Divider />
+            <MenuItem component={Link} href="/settings" onClick={closeProfile}>
+              <ListItemIcon>
+                <PersonOutline fontSize="small" />
+              </ListItemIcon>
+              Configurações da conta
+            </MenuItem>
+            <MenuItem onClick={logout} sx={{ color: 'error.main' }}>
+              <ListItemIcon sx={{ color: 'error.main' }}>
+                <LogoutOutlined fontSize="small" />
+              </ListItemIcon>
+              Sair
+            </MenuItem>
+          </ProfileMenu>
         </Toolbar>
       </AppBar>
       <Drawer
