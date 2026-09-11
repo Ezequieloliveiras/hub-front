@@ -1,1 +1,47 @@
-'use client';import{useState}from'react';import{Box,Button,Card,CardContent,TextField,Typography}from'@mui/material';import{useRouter}from'next/navigation';import{api}from'@/lib/api';export default function Register(){const r=useRouter(),[d,setD]=useState<any>({name:'',companyName:'',email:'',password:''});return <Box sx={{minHeight:'100vh',display:'grid',placeItems:'center',p:2}}><Card sx={{width:'100%',maxWidth:430}}><CardContent sx={{p:4}}><Typography variant="h4" fontWeight={800}>Comece agora</Typography>{[['name','Seu nome'],['companyName','Empresa'],['email','E-mail'],['password','Senha (mín. 8)']].map(([k,l])=><TextField key={k} fullWidth label={l} type={k==='password'?'password':'text'} margin="normal" onChange={e=>setD({...d,[k]:e.target.value})}/>) }<Button fullWidth variant="contained" sx={{mt:2}} onClick={async()=>{const x=await api.post('/auth/register',d);localStorage.setItem('token',x.data.accessToken);r.push('/')}}>Criar empresa</Button></CardContent></Card></Box>}
+'use client';
+import { useState } from 'react';
+import { Box, Button, Card, CardContent, TextField, Typography } from '@mui/material';
+import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
+export default function Register() {
+  const r = useRouter(),
+    [d, setD] = useState<any>({ name: '', companyName: '', email: '', password: '' });
+  return (
+    <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', p: 2 }}>
+      <Card sx={{ width: '100%', maxWidth: 430 }}>
+        <CardContent sx={{ p: 4 }}>
+          <Typography variant="h4" fontWeight={800}>
+            Comece agora
+          </Typography>
+          {[
+            ['name', 'Seu nome'],
+            ['companyName', 'Empresa'],
+            ['email', 'E-mail'],
+            ['password', 'Senha (mín. 8)'],
+          ].map(([k, l]) => (
+            <TextField
+              key={k}
+              fullWidth
+              label={l}
+              type={k === 'password' ? 'password' : 'text'}
+              margin="normal"
+              onChange={(e) => setD({ ...d, [k]: e.target.value })}
+            />
+          ))}
+          <Button
+            fullWidth
+            variant="contained"
+            sx={{ mt: 2 }}
+            onClick={async () => {
+              const x = await api.post('/auth/register', d);
+              localStorage.setItem('token', x.data.accessToken);
+              r.push('/');
+            }}
+          >
+            Criar empresa
+          </Button>
+        </CardContent>
+      </Card>
+    </Box>
+  );
+}

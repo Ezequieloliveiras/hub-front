@@ -1,1 +1,46 @@
-'use client';import{useEffect,useState}from'react';import{Card,CardContent,Typography}from'@mui/material';import Shell from'@/components/Shell';import{api,money}from'@/lib/api';export default function Profitability(){const[d,setD]=useState<any>();useEffect(()=>{api.get('/analytics/dashboard').then(r=>setD(r.data))},[]);return <Shell><div className="page"><Typography variant="h4" fontWeight={800} mb={3}>Rentabilidade</Typography><Card><CardContent><table className="table"><thead><tr><th>Produto</th><th>Vendas</th><th>Faturamento</th><th>Lucro</th><th>Margem</th></tr></thead><tbody>{d?.topProducts.map((p:any)=><tr key={p.sku}><td>{p.name}</td><td>{p.quantity}</td><td>{money(p.revenue)}</td><td>{money(p.profit)}</td><td>{p.margin.toFixed(1)}%</td></tr>)}</tbody></table></CardContent></Card></div></Shell>}
+'use client';
+import { useEffect, useState } from 'react';
+import { Card, CardContent, Typography } from '@mui/material';
+import Shell from '@/components/Shell';
+import { api, money } from '@/lib/api';
+export default function Profitability() {
+  const [d, setD] = useState<any>();
+  useEffect(() => {
+    api.get('/analytics/dashboard').then((r) => setD(r.data));
+  }, []);
+  return (
+    <Shell>
+      <div className="page">
+        <Typography variant="h4" fontWeight={800} mb={3}>
+          Rentabilidade
+        </Typography>
+        <Card>
+          <CardContent>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th>Vendas</th>
+                  <th>Faturamento</th>
+                  <th>Lucro</th>
+                  <th>Margem</th>
+                </tr>
+              </thead>
+              <tbody>
+                {d?.topProducts.map((p: any) => (
+                  <tr key={p.sku}>
+                    <td>{p.name}</td>
+                    <td>{p.quantity}</td>
+                    <td>{money(p.revenue)}</td>
+                    <td>{money(p.profit)}</td>
+                    <td>{p.margin.toFixed(1)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+      </div>
+    </Shell>
+  );
+}

@@ -1,1 +1,56 @@
-'use client';import{useEffect,useState}from'react';import{Card,CardContent,Chip,Typography}from'@mui/material';import Shell from'@/components/Shell';import{api,money}from'@/lib/api';export default function Sales(){const[x,setX]=useState<any[]>([]);useEffect(()=>{api.get('/orders').then(r=>setX(r.data))},[]);return <Shell><div className="page"><Typography variant="h4" fontWeight={800} mb={3}>Vendas</Typography><Card><CardContent><table className="table"><thead><tr><th>Pedido</th><th>Data</th><th>Cliente</th><th>Bruto</th><th>Taxas</th><th>Lucro</th><th>Margem</th><th>Status</th></tr></thead><tbody>{x.map(o=><tr key={o.id}><td>#{o.externalId}</td><td>{new Date(o.purchasedAt).toLocaleDateString('pt-BR')}</td><td>{o.buyerName}</td><td>{money(o.grossAmount)}</td><td>{money(o.marketplaceFee)}</td><td className={+o.estimatedProfit<0?'negative':'positive'}>{money(o.estimatedProfit)}</td><td>{Number(o.marginPercentage).toFixed(1)}%</td><td><Chip size="small" label={o.status}/></td></tr>)}</tbody></table></CardContent></Card></div></Shell>}
+'use client';
+import { useEffect, useState } from 'react';
+import { Card, CardContent, Chip, Typography } from '@mui/material';
+import Shell from '@/components/Shell';
+import { api, money } from '@/lib/api';
+export default function Sales() {
+  const [x, setX] = useState<any[]>([]);
+  useEffect(() => {
+    api.get('/orders').then((r) => setX(r.data));
+  }, []);
+  return (
+    <Shell>
+      <div className="page">
+        <Typography variant="h4" fontWeight={800} mb={3}>
+          Vendas
+        </Typography>
+        <Card>
+          <CardContent>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Pedido</th>
+                  <th>Data</th>
+                  <th>Cliente</th>
+                  <th>Bruto</th>
+                  <th>Taxas</th>
+                  <th>Lucro</th>
+                  <th>Margem</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {x.map((o) => (
+                  <tr key={o.id}>
+                    <td>#{o.externalId}</td>
+                    <td>{new Date(o.purchasedAt).toLocaleDateString('pt-BR')}</td>
+                    <td>{o.buyerName}</td>
+                    <td>{money(o.grossAmount)}</td>
+                    <td>{money(o.marketplaceFee)}</td>
+                    <td className={+o.estimatedProfit < 0 ? 'negative' : 'positive'}>
+                      {money(o.estimatedProfit)}
+                    </td>
+                    <td>{Number(o.marginPercentage).toFixed(1)}%</td>
+                    <td>
+                      <Chip size="small" label={o.status} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+      </div>
+    </Shell>
+  );
+}
