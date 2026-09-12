@@ -17,6 +17,7 @@ import {
   Divider,
   FormControlLabel,
   Grid,
+  IconButton,
   MenuItem,
   Stack,
   Step,
@@ -25,7 +26,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { Add, ExpandMore, Publish, Save } from '@mui/icons-material';
+import { Add, DeleteOutline, ExpandMore, Publish, Save } from '@mui/icons-material';
 import { api, money } from '@/lib/api';
 import {
   emptyMercadoLivreDraft,
@@ -40,6 +41,35 @@ import {
 
 const steps = ['Produto', 'Categoria', 'Informações', 'Preço e envio', 'Revisão'];
 
+type MercadoLivreCategoryOption = {
+  id?: string;
+  name?: string;
+  category_id?: string;
+  category_name?: string;
+  totalItems?: number;
+  total_items_in_this_category?: number;
+  children_categories?: MercadoLivreCategoryOption[];
+};
+
+const categoryIdOf = (category: MercadoLivreCategoryOption) =>
+  String(category.category_id || category.id || '').trim();
+
+const categoryNameOf = (category: MercadoLivreCategoryOption) =>
+  String(category.category_name || category.name || categoryIdOf(category)).trim();
+
+const normalizeCategory = (category: MercadoLivreCategoryOption): MercadoLivreCategoryOption => ({
+  ...category,
+  id: categoryIdOf(category),
+  name: categoryNameOf(category),
+});
+
+const normalizeSearchText = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
 export default function MercadoLivreListingForm({ integrationId }: { integrationId: string }) {
   const router = useRouter();
   const [activeStep, setActiveStep] = useState(0);
@@ -47,11 +77,17 @@ export default function MercadoLivreListingForm({ integrationId }: { integration
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [message, setMessage] = useState('');
+  const [messageSeverity, setMessageSeverity] = useState<'success' | 'info' | 'warning' | 'error'>(
+    'success',
+  );
   const [errors, setErrors] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [productId, setProductId] = useState('');
   const [categoryQuery, setCategoryQuery] = useState('');
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<MercadoLivreCategoryOption[]>([]);
+  const [categoryTrail, setCategoryTrail] = useState<MercadoLivreCategoryOption[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [categoryNotice, setCategoryNotice] = useState('');
   const [metadata, setMetadata] = useState<any>();
   const [catalogOptions, setCatalogOptions] = useState<any[]>([]);
   const [draft, setDraft] = useState<MercadoLivreListingDraft>(emptyMercadoLivreDraft);
@@ -65,7 +101,9 @@ export default function MercadoLivreListingForm({ integrationId }: { integration
       (metadata?.attributes || []).filter(
         (attribute: any) =>
           !attribute?.tags?.required &&
-          ['BRAND', 'MODEL', 'GTIN', 'EAN', 'MPN', 'COLOR', 'SIZE'].includes(attribute.id),
+          ['BRAND', 'MODEL', 'GTIN', 'EMPTY_GTIN_REASON', 'EAN', 'MPN', 'COLOR', 'SIZE'].includes(
+            attribute.id,
+          ),
       ),
     [metadata],
   );
@@ -75,6 +113,18 @@ export default function MercadoLivreListingForm({ integrationId }: { integration
         { id: 'gold_special', name: 'Clássico' },
         { id: 'gold_pro', name: 'Premium' },
       ];
+
+  const visibleCategories = useMemo(() => {
+    const query = normalizeSearchText(categoryQuery);
+    if (!query || /^mlb\d+$/i.test(query)) return categories;
+
+    return categories.filter((category) => {
+      const searchable = normalizeSearchText(
+        `${categoryNameOf(category)} ${categoryIdOf(category)}`,
+      );
+      return searchable.includes(query);
+    });
+  }, [categories, categoryQuery]);
 
   useEffect(() => {
     api.get('/products').then((response) => setProducts(response.data || []));
@@ -92,6 +142,13 @@ export default function MercadoLivreListingForm({ integrationId }: { integration
     }));
   }, [productId, products]);
 
+  useEffect(() => {
+    if (activeStep === 1 && !categories.length && !loadingCategories) {
+      loadRootCategories();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeStep]);
+
   const saveDraft = async (status?: string) => {
     setSaving(true);
     try {
@@ -100,6 +157,7 @@ export default function MercadoLivreListingForm({ integrationId }: { integration
         ? await api.patch(`/listing-creation/drafts/${draftId}`, { ...payload, status })
         : await api.post('/listing-creation/drafts', payload);
       setDraftId(response.data.id);
+      setMessageSeverity('success');
       setMessage('Rascunho salvo.');
       return response.data.id;
     } finally {
@@ -107,36 +165,120 @@ export default function MercadoLivreListingForm({ integrationId }: { integration
     }
   };
 
+  const loadRootCategories = async () => {
+    setLoadingCategories(true);
+    try {
+      const response = await api.get('/listing-creation/mercadolivre/categories/root');
+      const items = Array.isArray(response.data) ? response.data.map(normalizeCategory) : [];
+      setCategories(items);
+      setCategoryTrail([]);
+      setCategoryNotice('Categorias principais do Mercado Livre.');
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
+
+  const loadCategoryChildren = async (
+    category: MercadoLivreCategoryOption,
+    trail?: MercadoLivreCategoryOption[],
+  ) => {
+    const categoryId = categoryIdOf(category);
+    if (!categoryId) return;
+    setLoadingCategories(true);
+    try {
+      const response = await api.get(
+        `/listing-creation/mercadolivre/categories/${categoryId}/children`,
+      );
+      const currentCategory = normalizeCategory(response.data?.category || category);
+      const children = Array.isArray(response.data?.children)
+        ? response.data.children.map(normalizeCategory)
+        : [];
+
+      if (!children.length) {
+        await chooseCategory(currentCategory);
+        return;
+      }
+
+      setCategories(children);
+      setCategoryTrail(trail || [...categoryTrail, currentCategory]);
+      setCategoryNotice('Escolha uma subcategoria ou continue navegando.');
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
+
+  const backCategoryLevel = async () => {
+    if (categoryTrail.length <= 1) {
+      await loadRootCategories();
+      return;
+    }
+
+    const nextTrail = categoryTrail.slice(0, -1);
+    const parent = nextTrail[nextTrail.length - 1];
+    await loadCategoryChildren(parent, nextTrail);
+  };
+
   const searchCategories = async () => {
-    if (!categoryQuery.trim()) return;
-    const response = await api.get('/listing-creation/mercadolivre/categories/search', {
-      params: { q: categoryQuery },
-    });
-    setCategories(Array.isArray(response.data) ? response.data : []);
+    const query = (categoryQuery.trim() || draft.title.trim()).trim();
+    if (!query) {
+      await loadRootCategories();
+      return;
+    }
+
+    const categoryIdQuery = query.toUpperCase();
+    if (/^MLB\d+$/.test(categoryIdQuery)) {
+      await loadCategoryChildren({ id: categoryIdQuery, name: categoryIdQuery });
+      return;
+    }
+
+    setLoadingCategories(true);
+    try {
+      const response = await api.get('/listing-creation/mercadolivre/categories/search', {
+        params: { q: query },
+      });
+      const items = Array.isArray(response.data) ? response.data.map(normalizeCategory) : [];
+      setCategories(items);
+      setCategoryTrail([]);
+      setCategoryNotice(
+        items.length
+          ? 'Sugestoes do Mercado Livre para esta busca.'
+          : 'Nenhuma categoria encontrada. Tente buscar pelo nome do produto.',
+      );
+    } finally {
+      setLoadingCategories(false);
+    }
   };
 
   const chooseCategory = async (category: any) => {
-    const categoryId = category.category_id || category.id;
+    const categoryId = categoryIdOf(category);
+    const categoryName = categoryNameOf(category);
     setDraft((current) => ({
       ...current,
       categoryId,
-      categoryName: category.category_name || category.name || categoryId,
+      categoryName,
     }));
     const response = await api.get(
       `/listing-creation/mercadolivre/categories/${categoryId}/metadata`,
     );
     setMetadata(response.data);
     const catalogResponse = await api.get('/listing-creation/mercadolivre/catalog/search', {
-      params: { query: draft.title || categoryQuery, categoryId },
+      params: { query: draft.title || categoryQuery || categoryName, categoryId },
     });
     setCatalogOptions(catalogResponse.data?.results || []);
+    setCategoryNotice(`Categoria selecionada: ${categoryName} (${categoryId}).`);
   };
 
   const validate = async () => {
     const id = await saveDraft('VALIDATING');
     const response = await api.post(`/listing-creation/drafts/${id}/validate`);
     setErrors(response.data.errors || []);
-    if (response.data.valid) setMessage('Rascunho pronto para publicação.');
+    if (response.data.valid) {
+      setMessageSeverity('success');
+      setMessage('Rascunho pronto para publicação.');
+    } else {
+      setMessageSeverity('error');
+      setMessage('Corrija os campos indicados antes de publicar.');
+    }
     return response.data.valid;
   };
 
@@ -148,9 +290,15 @@ export default function MercadoLivreListingForm({ integrationId }: { integration
       const response = await api.post(`/listing-creation/drafts/${draftId}/publish`);
       router.push(`/listings/${response.data.id}`);
     } catch (error: any) {
-      const responseErrors = error?.response?.data?.errors;
+      const responseData = error?.response?.data;
+      const responseErrors = responseData?.errors || responseData?.message?.errors;
+      const responseMessage =
+        typeof responseData?.message === 'string'
+          ? responseData.message
+          : responseData?.message?.message;
       setErrors(Array.isArray(responseErrors) ? responseErrors : []);
-      setMessage(error?.response?.data?.message || 'Não foi possível publicar o anúncio.');
+      setMessageSeverity('error');
+      setMessage(responseMessage || 'Não foi possível publicar o anúncio.');
     } finally {
       setPublishing(false);
     }
@@ -178,7 +326,7 @@ export default function MercadoLivreListingForm({ integrationId }: { integration
         ))}
       </Stepper>
 
-      {message && <Alert severity={errors.length ? 'warning' : 'success'}>{message}</Alert>}
+      {message && <Alert severity={messageSeverity}>{message}</Alert>}
       {errors.length > 0 && (
         <Alert severity="error">
           {errors.slice(0, 5).map((error) => (
@@ -246,34 +394,86 @@ export default function MercadoLivreListingForm({ integrationId }: { integration
                   fullWidth
                   label="Buscar categoria"
                   value={categoryQuery}
+                  helperText="Busque pelo nome do produto/categoria ou informe um ID como MLB7022."
                   onChange={(event) => setCategoryQuery(event.target.value)}
                 />
-                <Button variant="outlined" onClick={searchCategories}>
-                  Buscar
+                <Button variant="outlined" disabled={loadingCategories} onClick={searchCategories}>
+                  {loadingCategories ? 'Buscando...' : 'Buscar'}
                 </Button>
               </Stack>
+
+              <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+                <Button size="small" variant="outlined" onClick={loadRootCategories}>
+                  Categorias principais
+                </Button>
+                {categoryTrail.length > 0 && (
+                  <Button size="small" onClick={backCategoryLevel}>
+                    Voltar categoria
+                  </Button>
+                )}
+                {categoryTrail.map((category) => (
+                  <Chip
+                    key={categoryIdOf(category)}
+                    size="small"
+                    label={categoryNameOf(category)}
+                  />
+                ))}
+              </Stack>
+
+              {categoryNotice && <Alert severity="info">{categoryNotice}</Alert>}
+
+              {categoryQuery.trim() && categories.length > 0 && (
+                <Typography className="muted" variant="body2">
+                  Mostrando {visibleCategories.length} de {categories.length} categorias nesta
+                  lista. Use Buscar para consultar no Mercado Livre inteiro.
+                </Typography>
+              )}
+
               <Grid container spacing={1}>
-                {categories.map((category) => {
-                  const categoryId = category.category_id || category.id;
+                {visibleCategories.map((category) => {
+                  const categoryId = categoryIdOf(category);
+                  const categoryName = categoryNameOf(category);
+                  const totalItems =
+                    category.totalItems ?? category.total_items_in_this_category ?? null;
                   return (
                     <Grid item xs={12} md={6} key={categoryId}>
                       <Card variant="outlined">
                         <CardContent>
-                          <Typography fontWeight={800}>
-                            {category.category_name || category.name || categoryId}
-                          </Typography>
+                          <Typography fontWeight={800}>{categoryName}</Typography>
                           <Typography className="muted" variant="body2">
                             {categoryId}
+                            {totalItems !== null ? ` - ${totalItems} anúncios` : ''}
                           </Typography>
-                          <Button size="small" onClick={() => chooseCategory(category)}>
-                            Escolher categoria
-                          </Button>
+                          <Stack direction="row" spacing={1} mt={1}>
+                            <Button size="small" onClick={() => loadCategoryChildren(category)}>
+                              Abrir
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              onClick={() => chooseCategory(category)}
+                            >
+                              Escolher
+                            </Button>
+                          </Stack>
                         </CardContent>
                       </Card>
                     </Grid>
                   );
                 })}
               </Grid>
+              {!loadingCategories && !categories.length && (
+                <Alert severity="warning">
+                  Nenhuma categoria carregada. Clique em Categorias principais ou busque pelo nome
+                  do produto.
+                </Alert>
+              )}
+              {!loadingCategories && categories.length > 0 && visibleCategories.length === 0 && (
+                <Alert severity="warning">
+                  Nenhuma categoria desta lista corresponde ao filtro. Clique em Buscar para fazer
+                  uma busca global no Mercado Livre.
+                </Alert>
+              )}
               {draft.categoryId && (
                 <Alert severity="info">
                   Categoria selecionada: {draft.categoryName || draft.categoryId}
@@ -392,6 +592,23 @@ export default function MercadoLivreListingForm({ integrationId }: { integration
                         fullWidth
                         label={index === 0 ? 'Imagem principal' : `Imagem ${index + 1}`}
                         value={picture}
+                        InputProps={{
+                          endAdornment: (
+                            <IconButton
+                              edge="end"
+                              aria-label="Excluir imagem"
+                              disabled={draft.pictures.length === 1}
+                              onClick={() => {
+                                const pictures = draft.pictures.filter(
+                                  (_, itemIndex) => itemIndex !== index,
+                                );
+                                setDraft({ ...draft, pictures: pictures.length ? pictures : [''] });
+                              }}
+                            >
+                              <DeleteOutline />
+                            </IconButton>
+                          ),
+                        }}
                         onChange={(event) => {
                           const pictures = [...draft.pictures];
                           pictures[index] = event.target.value;
