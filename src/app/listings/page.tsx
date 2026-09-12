@@ -11,7 +11,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { Sync } from '@mui/icons-material';
+import { PostAdd, Sync } from '@mui/icons-material';
 import Shell from '@/components/Shell';
 import { api, money } from '@/lib/api';
 export default function Listings() {
@@ -42,14 +42,24 @@ export default function Listings() {
               Acompanhe e gerencie seus anúncios nos marketplaces conectados.
             </Typography>
           </Box>
-          <Button
-            variant="contained"
-            startIcon={syncing ? <CircularProgress size={16} /> : <Sync />}
-            disabled={syncing}
-            onClick={sync}
-          >
-            Sincronizar anúncios
-          </Button>
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant="contained"
+              component={Link}
+              href="/listings/create"
+              startIcon={<PostAdd />}
+            >
+              Criar anúncio
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={syncing ? <CircularProgress size={16} /> : <Sync />}
+              disabled={syncing}
+              onClick={sync}
+            >
+              Sincronizar anúncios
+            </Button>
+          </Stack>
         </Box>
         <Card>
           <CardContent>
