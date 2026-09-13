@@ -30,6 +30,7 @@ import {
   StorefrontOutlined,
 } from '@mui/icons-material';
 import Shell from '@/components/Shell';
+import { hasFilters, ListFilters, useListQuery } from '@/components/ListControls';
 import { api } from '@/lib/api';
 
 const apps = [
@@ -38,11 +39,29 @@ const apps = [
     provider: 'MERCADOLIVRE',
     description: 'Sincronize pedidos, anuncios e custos da sua loja.',
   },
-  { name: 'Shopee', description: 'Marketplace preparado para Seller Pulse.' },
-  { name: 'Amazon', description: 'Marketplace preparado para Seller Pulse.' },
-  { name: 'Bling', description: 'ERP preparado para Seller Pulse.' },
-  { name: 'Omie', description: 'ERP preparado para Seller Pulse.' },
-  { name: 'Tiny', description: 'ERP preparado para Seller Pulse.' },
+  { name: 'Shopee', provider: 'SHOPEE', description: 'Marketplace preparado para Seller Pulse.' },
+  { name: 'Amazon', provider: 'AMAZON', description: 'Marketplace preparado para Seller Pulse.' },
+  { name: 'Bling', provider: 'BLING', description: 'ERP preparado para Seller Pulse.' },
+  { name: 'Omie', provider: 'OMIE', description: 'ERP preparado para Seller Pulse.' },
+  { name: 'Tiny', provider: 'TINY', description: 'ERP preparado para Seller Pulse.' },
+];
+
+const marketplaceOptions = [
+  { label: 'Todos marketplaces', value: '' },
+  { label: 'Mercado Livre', value: 'MERCADOLIVRE' },
+  { label: 'Shopee', value: 'SHOPEE' },
+  { label: 'Amazon', value: 'AMAZON' },
+  { label: 'Bling', value: 'BLING' },
+  { label: 'Omie', value: 'OMIE' },
+  { label: 'Tiny', value: 'TINY' },
+];
+
+const statusOptions = [
+  { label: 'Todos status', value: '' },
+  { label: 'Conectado', value: 'CONNECTED' },
+  { label: 'Desconectado', value: 'DISCONNECTED' },
+  { label: 'Erro', value: 'ERROR' },
+  { label: 'Pendente', value: 'PENDING' },
 ];
 
 type PageMessage = {
@@ -71,6 +90,7 @@ function formatDate(value?: string | null) {
 }
 
 export default function Integrations() {
+  const { values, setValue, clear } = useListQuery();
   const [integrations, setIntegrations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
@@ -78,10 +98,18 @@ export default function Integrations() {
   const [configOpen, setConfigOpen] = useState(false);
   const [configLoading, setConfigLoading] = useState(false);
   const [configSaving, setConfigSaving] = useState(false);
-  const [mercadoLivreConfig, setMercadoLivreConfig] = useState<MercadoLivreConfig>(
-    defaultMercadoLivreConfig,
-  );
+  const [mercadoLivreConfig, setMercadoLivreConfig] =
+    useState<MercadoLivreConfig>(defaultMercadoLivreConfig);
   const [message, setMessage] = useState<PageMessage | null>(null);
+  const integrationParams = useMemo(
+    () => ({
+      marketplace: values.marketplace || undefined,
+      status: statusOptions.some((option) => option.value === values.status)
+        ? values.status
+        : undefined,
+    }),
+    [values.marketplace, values.status],
+  );
 
   const handleRequestError = (error: unknown, fallback: string) => {
     const axiosError = error as AxiosError<{ message?: string }>;
@@ -108,7 +136,7 @@ export default function Integrations() {
 
   const loadIntegrations = async () => {
     try {
-      const { data } = await api.get('/integrations');
+      const { data } = await api.get('/integrations', { params: integrationParams });
       setIntegrations(data);
     } catch (error) {
       handleRequestError(error, 'Nao foi possivel carregar as integracoes.');
@@ -150,10 +178,16 @@ export default function Integrations() {
     }
 
     loadIntegrations().finally(() => setLoading(false));
-  }, []);
+  }, [integrationParams]);
 
   const ml = integrations.find((x) => x.provider === 'MERCADOLIVRE');
   const mlMetadata = (ml?.metadata || {}) as Record<string, string>;
+  const visibleApps = apps.filter((app) => {
+    if (values.marketplace && values.marketplace !== app.provider) return false;
+    if (!values.status) return true;
+    const integration = integrations.find((item) => item.provider === app.provider);
+    return integration?.status === values.status;
+  });
 
   const mlState = useMemo(() => {
     if (!ml || ml.status !== 'CONNECTED') {
@@ -271,6 +305,24 @@ export default function Integrations() {
           <Typography className="muted">Conecte seus canais e centralize a operacao.</Typography>
         </Stack>
 
+        <ListFilters
+          fields={[
+            {
+              name: 'marketplace',
+              label: 'Marketplace',
+              type: 'select',
+              options: marketplaceOptions,
+            },
+            { name: 'status', label: 'Status', type: 'select', options: statusOptions },
+          ]}
+          values={values}
+          loading={loading}
+          hasActiveFilters={hasFilters(values)}
+          onChange={setValue}
+          onManyChange={() => undefined}
+          onClear={clear}
+        />
+
         <Box
           className="grid"
           sx={{
@@ -282,7 +334,7 @@ export default function Integrations() {
             alignItems: 'stretch',
           }}
         >
-          {apps.map((app) => {
+          {visibleApps.map((app) => {
             const isMl = app.provider === 'MERCADOLIVRE';
             const connected = isMl && ml?.status === 'CONNECTED';
             const chip = isMl
@@ -440,12 +492,7 @@ export default function Integrations() {
           </Box>
         )}
 
-        <Dialog
-          open={configOpen}
-          onClose={() => setConfigOpen(false)}
-          fullWidth
-          maxWidth="sm"
-        >
+        <Dialog open={configOpen} onClose={() => setConfigOpen(false)} fullWidth maxWidth="sm">
           <DialogTitle>Configurar Mercado Livre</DialogTitle>
           <DialogContent>
             {configLoading ? (

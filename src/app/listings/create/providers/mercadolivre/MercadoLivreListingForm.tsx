@@ -694,7 +694,13 @@ export default function MercadoLivreListingForm({ integrationId }: { integration
                     component="img"
                     src={picture}
                     alt="Imagem"
-                    sx={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 1 }}
+                    sx={{
+                      width: 72,
+                      height: 72,
+                      objectFit: 'contain',
+                      borderRadius: 1,
+                      bgcolor: '#fff',
+                    }}
                   />
                 ))}
               </Stack>

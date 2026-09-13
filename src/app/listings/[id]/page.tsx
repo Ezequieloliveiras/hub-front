@@ -291,17 +291,32 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
       title: 'Pausar anuncio',
       text: 'Enquanto estiver pausado, ele deixara de ficar disponivel para novas vendas no Mercado Livre.',
       action: 'Pausar anuncio',
+      loading: 'Pausando...',
     },
     activate: {
       title: 'Reativar anuncio',
       text: 'O anuncio voltara a ficar disponivel no Mercado Livre se as regras da plataforma permitirem.',
       action: 'Reativar anuncio',
+      loading: 'Reativando...',
     },
     close: {
       title: 'Encerrar anuncio',
       text: 'Essa acao pode nao ser reversivel. O Mercado Livre informa que anuncios encerrados nao podem ser ativados novamente, mas podem ser republicados.',
       action: 'Encerrar anuncio',
+      loading: 'Encerrando...',
     },
+  };
+  const isBusy = Boolean(loadingAction);
+  const isConfirmActionLoading = confirmAction ? loadingAction === confirmAction : false;
+
+  const openConfirmAction = (action: Exclude<ConfirmAction, null>) => {
+    setMenuAnchor(null);
+    setConfirmAction(action);
+  };
+
+  const closeConfirmAction = () => {
+    if (isConfirmActionLoading) return;
+    setConfirmAction(null);
   };
 
   if (err) {
@@ -358,7 +373,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
             <Button
               variant="outlined"
               startIcon={loadingAction === 'sync' ? <CircularProgress size={16} /> : <Sync />}
-              disabled={Boolean(loadingAction)}
+              disabled={isBusy}
               onClick={() =>
                 run(
                   'sync',
@@ -380,7 +395,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                 Abrir no Mercado Livre
               </Button>
             )}
-            <IconButton onClick={(event) => setMenuAnchor(event.currentTarget)}>
+            <IconButton disabled={isBusy} onClick={(event) => setMenuAnchor(event.currentTarget)}>
               <MoreVert />
             </IconButton>
           </Stack>
@@ -404,14 +419,11 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                   <Grid item xs={12} md={5}>
                     <Box
                       sx={{
-                        aspectRatio: '1 / 1',
                         borderRadius: 2,
                         border: 1,
                         borderColor: 'divider',
-                        bgcolor: '#f3f5f8',
-                        overflow: 'hidden',
-                        display: 'grid',
-                        placeItems: 'center',
+                        bgcolor: '#fff',
+                        p: 2,
                       }}
                     >
                       {imageUrl ? (
@@ -420,7 +432,15 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                           src={imageUrl}
                           alt={listing.title}
                           onError={() => setImageFailed(true)}
-                          sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          sx={{
+                            width: '100%',
+                            height: 'auto',
+                            maxWidth: '100%',
+                            maxHeight: { xs: 460, md: 420 },
+                            objectFit: 'contain',
+                            display: 'block',
+                            mx: 'auto',
+                          }}
                         />
                       ) : (
                         <Typography className="muted">Sem imagem</Typography>
@@ -549,21 +569,32 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
         </Grid>
 
         <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
-          <MenuItem onClick={() => setConfirmAction('pause')}>
+          <MenuItem disabled={isBusy} onClick={() => openConfirmAction('pause')}>
             <PauseCircle fontSize="small" style={{ marginRight: 8 }} />
             Pausar anuncio
           </MenuItem>
-          <MenuItem onClick={() => setConfirmAction('activate')}>
+          <MenuItem disabled={isBusy} onClick={() => openConfirmAction('activate')}>
             <PlayCircle fontSize="small" style={{ marginRight: 8 }} />
             Reativar anuncio
           </MenuItem>
-          <MenuItem onClick={() => setConfirmAction('close')} sx={{ color: 'error.main' }}>
+          <MenuItem
+            disabled={isBusy}
+            onClick={() => openConfirmAction('close')}
+            sx={{ color: 'error.main' }}
+          >
             <WarningAmber fontSize="small" style={{ marginRight: 8 }} />
             Encerrar anuncio
           </MenuItem>
         </Menu>
 
-        <Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="md">
+        <Dialog
+          open={editOpen}
+          onClose={() => {
+            if (loadingAction !== 'edit') setEditOpen(false);
+          }}
+          fullWidth
+          maxWidth="md"
+        >
           <DialogTitle>Editar anuncio</DialogTitle>
           <DialogContent>
             <Stack spacing={3} mt={1}>
@@ -679,7 +710,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                             border: 1,
                             borderColor: 'divider',
                             borderRadius: 2,
-                            bgcolor: '#f3f5f8',
+                            bgcolor: '#fff',
                             display: 'grid',
                             placeItems: 'center',
                             overflow: 'hidden',
@@ -692,7 +723,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                               component="img"
                               src={normalizedUrl}
                               alt={`Imagem ${index + 1}`}
-                              sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              sx={{ width: '100%', height: '100%', objectFit: 'contain' }}
                             />
                           ) : (
                             <PhotoCamera fontSize="small" color="disabled" />
@@ -810,19 +841,21 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setEditOpen(false)}>Cancelar</Button>
-            <Button variant="contained" disabled={loadingAction === 'edit'} onClick={saveEdit}>
+            <Button disabled={loadingAction === 'edit'} onClick={() => setEditOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={loadingAction === 'edit' ? <CircularProgress size={16} /> : undefined}
+              disabled={loadingAction === 'edit'}
+              onClick={saveEdit}
+            >
               {loadingAction === 'edit' ? 'Salvando...' : 'Salvar alteracoes'}
             </Button>
           </DialogActions>
         </Dialog>
 
-        <Dialog
-          open={Boolean(confirmAction)}
-          onClose={() => setConfirmAction(null)}
-          fullWidth
-          maxWidth="xs"
-        >
+        <Dialog open={Boolean(confirmAction)} onClose={closeConfirmAction} fullWidth maxWidth="xs">
           {confirmAction && (
             <>
               <DialogTitle>{confirmCopy[confirmAction].title}</DialogTitle>
@@ -830,11 +863,14 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                 <Typography>{confirmCopy[confirmAction].text}</Typography>
               </DialogContent>
               <DialogActions>
-                <Button onClick={() => setConfirmAction(null)}>Cancelar</Button>
+                <Button disabled={isConfirmActionLoading} onClick={closeConfirmAction}>
+                  Cancelar
+                </Button>
                 <Button
                   variant="contained"
                   color={confirmAction === 'close' ? 'error' : 'primary'}
-                  disabled={Boolean(loadingAction)}
+                  startIcon={isConfirmActionLoading ? <CircularProgress size={16} /> : undefined}
+                  disabled={isBusy}
                   onClick={() => {
                     const action = confirmAction;
                     const endpoint =
@@ -850,7 +886,9 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                     );
                   }}
                 >
-                  {confirmCopy[confirmAction].action}
+                  {isConfirmActionLoading
+                    ? confirmCopy[confirmAction].loading
+                    : confirmCopy[confirmAction].action}
                 </Button>
               </DialogActions>
             </>

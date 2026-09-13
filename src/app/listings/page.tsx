@@ -1,5 +1,6 @@
 'use client';
-import { useEffect, useState } from 'react';
+
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   Box,
@@ -13,14 +14,61 @@ import {
 } from '@mui/material';
 import { PostAdd, Sync } from '@mui/icons-material';
 import Shell from '@/components/Shell';
+import {
+  hasFilters,
+  ListFilters,
+  ResultsPagination,
+  useListQuery,
+  type PaginationMeta,
+} from '@/components/ListControls';
 import { api, money } from '@/lib/api';
+
+const marketplaceOptions = [
+  { label: 'Todos marketplaces', value: '' },
+  { label: 'Mercado Livre', value: 'MERCADOLIVRE' },
+  { label: 'Shopee', value: 'SHOPEE' },
+  { label: 'Amazon', value: 'AMAZON' },
+];
+
+const quickFilters = [
+  { label: 'Todos', value: 'all' },
+  { label: 'Ativos', value: 'active' },
+  { label: 'Pausados', value: 'paused' },
+  { label: 'Encerrados', value: 'closed' },
+  { label: 'Com erro', value: 'error' },
+];
+
+const sortOptions = [
+  { label: 'Atualizacao', value: 'updatedAt' },
+  { label: 'Sincronizacao', value: 'lastSyncedAt' },
+  { label: 'Titulo', value: 'title' },
+  { label: 'Preco', value: 'price' },
+  { label: 'Estoque', value: 'availableQuantity' },
+  { label: 'Criacao', value: 'createdAt' },
+];
+
 export default function Listings() {
-  const [data, setData] = useState<any>(),
-    [syncing, setSyncing] = useState(false);
-  const load = () => api.get('/listings').then((r) => setData(r.data));
+  const { values, setValue, clear } = useListQuery();
+  const [data, setData] = useState<{ items: any[]; pagination?: PaginationMeta }>();
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+
+  const params = useMemo(() => ({ limit: 20, ...values }), [values]);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get('/listings', { params });
+      setData(response.data);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     load();
-  }, []);
+  }, [params]);
+
   const sync = async () => {
     setSyncing(true);
     try {
@@ -30,16 +78,19 @@ export default function Listings() {
       setSyncing(false);
     }
   };
+
+  const items = data?.items || [];
+
   return (
     <Shell>
       <div className="page">
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Box>
             <Typography variant="h4" fontWeight={800}>
-              Anúncios
+              Anuncios
             </Typography>
             <Typography className="muted">
-              Acompanhe e gerencie seus anúncios nos marketplaces conectados.
+              Acompanhe e gerencie seus anuncios nos marketplaces conectados.
             </Typography>
           </Box>
           <Stack direction="row" spacing={1}>
@@ -49,7 +100,7 @@ export default function Listings() {
               href="/listings/create"
               startIcon={<PostAdd />}
             >
-              Criar anúncio
+              Criar anuncio
             </Button>
             <Button
               variant="outlined"
@@ -57,49 +108,96 @@ export default function Listings() {
               disabled={syncing}
               onClick={sync}
             >
-              Sincronizar anúncios
+              Sincronizar anuncios
             </Button>
           </Stack>
         </Box>
+
+        <ListFilters
+          fields={[
+            {
+              name: 'search',
+              label: 'Buscar',
+              type: 'search',
+              placeholder: 'Buscar titulo, SKU, MLB, codigo Shopee...',
+            },
+            {
+              name: 'marketplace',
+              label: 'Marketplace',
+              type: 'select',
+              options: marketplaceOptions,
+            },
+            { name: 'dateFrom', label: 'De', type: 'date', minWidth: 140 },
+            { name: 'dateTo', label: 'Ate', type: 'date', minWidth: 140 },
+          ]}
+          quickFilters={quickFilters}
+          sortOptions={sortOptions}
+          values={values}
+          loading={loading}
+          hasActiveFilters={hasFilters(values)}
+          onChange={setValue}
+          onManyChange={() => undefined}
+          onClear={clear}
+        />
+
         <Card>
           <CardContent>
-            {!data ? (
+            {items.length > 0 ? (
+              <ResultsPagination
+                pagination={data?.pagination}
+                onPageChange={(page) => setValue('page', String(page))}
+                position="top"
+              />
+            ) : null}
+            {loading && !data ? (
               <CircularProgress />
-            ) : data.items.length === 0 ? (
-              <Typography className="muted">Nenhum anúncio sincronizado ainda.</Typography>
+            ) : items.length === 0 ? (
+              <Typography className="muted">Nenhum anuncio encontrado.</Typography>
             ) : (
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Título</th>
+                    <th>Titulo</th>
                     <th>ID</th>
-                    <th>Preço</th>
+                    <th>Preco</th>
                     <th>Estoque</th>
                     <th>Status</th>
-                    <th>Ações</th>
+                    <th>Sincronizado</th>
+                    <th>Acoes</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {data.items.map((x: any) => (
-                    <tr key={x.id}>
+                  {items.map((item: any) => (
+                    <tr key={item.id}>
                       <td>
-                        <b>{x.title}</b>
+                        <b>{item.title}</b>
+                        <Typography className="muted" variant="caption" display="block">
+                          {item.product?.sku || item.externalSku || '-'} · {item.marketplace}
+                        </Typography>
                       </td>
-                      <td>{x.externalId}</td>
-                      <td>{money(Number(x.price))}</td>
-                      <td>{x.availableQuantity}</td>
+                      <td>{item.externalId}</td>
+                      <td>{money(Number(item.price))}</td>
+                      <td>{item.availableQuantity}</td>
                       <td>
-                        <Chip size="small" label={x.status === 'active' ? 'Ativo' : x.status} />
+                        <Chip size="small" label={formatStatus(item.status)} />
+                      </td>
+                      <td>
+                        <Typography variant="body2">
+                          {formatDateTime(item.lastSyncedAt || item.createdAt)}
+                        </Typography>
+                        <Typography className="muted" variant="caption">
+                          {item.lastSyncedAt ? 'Ultima sincronizacao' : 'Importado/criado'}
+                        </Typography>
                       </td>
                       <td>
                         <Stack direction="row" spacing={1}>
-                          <Button size="small" component={Link} href={`/listings/${x.id}`}>
+                          <Button size="small" component={Link} href={`/listings/${item.id}`}>
                             Detalhes
                           </Button>
-                          {x.permalink && (
+                          {item.permalink && (
                             <Button
                               size="small"
-                              href={x.permalink}
+                              href={item.permalink}
                               target="_blank"
                               rel="noopener noreferrer"
                             >
@@ -118,4 +216,21 @@ export default function Listings() {
       </div>
     </Shell>
   );
+}
+
+function formatStatus(status: string) {
+  const labels: Record<string, string> = {
+    active: 'Ativo',
+    paused: 'Pausado',
+    closed: 'Encerrado',
+  };
+  return labels[status] || status;
+}
+
+function formatDateTime(value?: string) {
+  if (!value) return '-';
+  return new Intl.DateTimeFormat('pt-BR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(new Date(value));
 }
