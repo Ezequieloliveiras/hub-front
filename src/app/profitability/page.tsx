@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CircularProgress, Typography } from '@mui/material';
 import Shell from '@/components/Shell';
+import { LabelWithInfo } from '@/components/InfoHint';
 import {
   hasFilters,
   ListFilters,
@@ -100,9 +101,24 @@ export default function Profitability() {
                     <th>Produto</th>
                     <th>SKU</th>
                     <th>Vendas</th>
-                    <th>Faturamento</th>
-                    <th>Lucro</th>
-                    <th>Margem</th>
+                    <th>
+                      <LabelWithInfo
+                        label="Faturamento"
+                        info="Soma do valor bruto vendido por este produto no periodo filtrado."
+                      />
+                    </th>
+                    <th>
+                      <LabelWithInfo
+                        label="Lucro"
+                        info="Soma do lucro estimado dos itens deste produto: receita menos taxas, frete, custos, descontos e impostos estimados."
+                      />
+                    </th>
+                    <th>
+                      <LabelWithInfo
+                        label="Margem"
+                        info="Lucro estimado dividido pelo faturamento do produto no periodo."
+                      />
+                    </th>
                   </tr>
                 </thead>
                 <tbody>

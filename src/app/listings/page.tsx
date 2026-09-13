@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import { PostAdd, Sync } from '@mui/icons-material';
 import Shell from '@/components/Shell';
+import { LabelWithInfo } from '@/components/InfoHint';
 import {
   hasFilters,
   ListFilters,
@@ -159,7 +160,12 @@ export default function Listings() {
                   <tr>
                     <th>Titulo</th>
                     <th>ID</th>
-                    <th>Preco</th>
+                    <th>
+                      <LabelWithInfo
+                        label="Preco"
+                        info="Preco atual do anuncio sincronizado do marketplace."
+                      />
+                    </th>
                     <th>Estoque</th>
                     <th>Status</th>
                     <th>Sincronizado</th>

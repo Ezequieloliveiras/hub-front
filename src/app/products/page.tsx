@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, Chip, CircularProgress, Stack, Typography } from '@mui/material';
 import Shell from '@/components/Shell';
+import { LabelWithInfo } from '@/components/InfoHint';
 import {
   hasFilters,
   ListFilters,
@@ -18,12 +19,6 @@ const marketplaceOptions = [
   { label: 'Mercado Livre', value: 'MERCADOLIVRE' },
   { label: 'Shopee', value: 'SHOPEE' },
   { label: 'Amazon', value: 'AMAZON' },
-];
-
-const statusOptions = [
-  { label: 'Todos status', value: '' },
-  { label: 'Ativo', value: 'active' },
-  { label: 'Inativo', value: 'inactive' },
 ];
 
 const quickFilters = [
@@ -84,7 +79,6 @@ export default function Products() {
               type: 'select',
               options: marketplaceOptions,
             },
-            { name: 'status', label: 'Status', type: 'select', options: statusOptions },
             { name: 'dateFrom', label: 'Cadastro de', type: 'date', minWidth: 150 },
             { name: 'dateTo', label: 'Cadastro ate', type: 'date', minWidth: 150 },
           ]}
@@ -100,6 +94,13 @@ export default function Products() {
 
         <Card>
           <CardContent>
+            {items.length > 0 ? (
+              <ResultsPagination
+                pagination={data?.pagination}
+                onPageChange={(page) => setValue('page', String(page))}
+                position="top"
+              />
+            ) : null}
             {loading && !data ? (
               <CircularProgress />
             ) : items.length === 0 ? (
@@ -110,7 +111,12 @@ export default function Products() {
                   <tr>
                     <th>Produto</th>
                     <th>SKU</th>
-                    <th>Custo</th>
+                    <th>
+                      <LabelWithInfo
+                        label="Custo"
+                        info="Custo unitario cadastrado para o produto. Usado nos calculos de lucro e margem."
+                      />
+                    </th>
                     <th>Marketplace</th>
                     <th>Estoque</th>
                     <th>Status</th>
@@ -157,10 +163,6 @@ export default function Products() {
                 </tbody>
               </table>
             )}
-            <ResultsPagination
-              pagination={data?.pagination}
-              onPageChange={(page) => setValue('page', String(page))}
-            />
           </CardContent>
         </Card>
       </div>

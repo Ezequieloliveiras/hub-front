@@ -1,9 +1,9 @@
 'use client';
-import { useEffect, useState } from 'react';
+
+import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Box,
-  Button,
   Card,
   CardContent,
   Chip,
@@ -15,25 +15,55 @@ import {
 } from '@mui/material';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import Shell from '@/components/Shell';
+import { LabelWithInfo } from '@/components/InfoHint';
 import { api, money } from '@/lib/api';
+
 const labels: { [key: string]: string } = {
   revenue: 'Faturamento',
   profit: 'Lucro estimado',
-  margin: 'Margem média',
+  margin: 'Margem media',
   orders: 'Pedidos',
   productsSold: 'Produtos vendidos',
-  ticket: 'Ticket médio',
+  ticket: 'Ticket medio',
   fees: 'Taxas',
   cost: 'Custo dos produtos',
 };
+
+const kpiInfo: { [key: string]: string } = {
+  revenue: 'Soma do valor bruto dos pedidos no periodo filtrado.',
+  profit:
+    'Receita bruta menos taxas do marketplace, frete, descontos, custo dos produtos e impostos estimados.',
+  margin: 'Lucro estimado dividido pelo faturamento bruto do periodo.',
+  orders: 'Quantidade de pedidos sincronizados no periodo filtrado.',
+  productsSold: 'Soma das quantidades vendidas nos itens dos pedidos do periodo.',
+  ticket: 'Faturamento bruto dividido pela quantidade de pedidos do periodo.',
+  fees: 'Soma das taxas cobradas pelos marketplaces nos pedidos do periodo.',
+  cost: 'Soma do custo dos produtos vendidos nos pedidos do periodo.',
+};
+
 export default function Dashboard() {
-  const [d, setD] = useState<any>();
+  const [dashboard, setDashboard] = useState<any>();
+  const [period, setPeriod] = useState('7');
+  const [marketplace, setMarketplace] = useState('MERCADOLIVRE');
+  const dateParams = useMemo(() => periodDateParams(Number(period)), [period]);
+
   useEffect(() => {
+    setDashboard(undefined);
     api
-      .get('/analytics/dashboard')
-      .then((r) => setD(r.data))
-      .catch(() => setD(null));
-  }, []);
+      .get('/analytics/dashboard', {
+        params: {
+          ...dateParams,
+          ...(marketplace ? { marketplace } : {}),
+        },
+      })
+      .then((response) => setDashboard(response.data))
+      .catch(() => setDashboard(null));
+  }, [dateParams, marketplace]);
+
+  const topProducts = Array.isArray(dashboard?.topProducts)
+    ? dashboard.topProducts
+    : dashboard?.topProducts?.items || [];
+
   return (
     <Shell>
       <div className="page">
@@ -49,58 +79,72 @@ export default function Dashboard() {
         >
           <Box>
             <Typography variant="h4" fontWeight={800}>
-              Visão geral
+              Visao geral
             </Typography>
-            <Typography className="muted">Acompanhe o pulso da sua operação.</Typography>
+            <Typography className="muted">Acompanhe o pulso da sua operacao.</Typography>
           </Box>
           <Stack direction="row" spacing={1} alignItems="center">
-            <Select size="small" defaultValue="7" sx={{ height: 40 }}>
-              <MenuItem value="7">Últimos 7 dias</MenuItem>
-              <MenuItem value="30">30 dias</MenuItem>
+            <Select
+              size="small"
+              value={period}
+              onChange={(event) => setPeriod(event.target.value)}
+              sx={{ height: 40 }}
+            >
+              <MenuItem value="7">Ultimos 7 dias</MenuItem>
+              <MenuItem value="30">Ultimos 30 dias</MenuItem>
             </Select>
-            <Button sx={{ height: 40, whiteSpace: 'nowrap' }} variant="outlined">
-              Mercado Livre
-            </Button>
+            <Select
+              size="small"
+              value={marketplace}
+              onChange={(event) => setMarketplace(event.target.value)}
+              sx={{ height: 40, minWidth: 150 }}
+            >
+              <MenuItem value="">Todos marketplaces</MenuItem>
+              <MenuItem value="MERCADOLIVRE">Mercado Livre</MenuItem>
+              <MenuItem value="SHOPEE">Shopee</MenuItem>
+              <MenuItem value="AMAZON">Amazon</MenuItem>
+            </Select>
           </Stack>
         </Box>
-        {d === undefined ? (
+
+        {dashboard === undefined ? (
           <Skeleton height={360} />
-        ) : !d ? (
+        ) : !dashboard ? (
           <Alert severity="info">
             Conecte seu primeiro marketplace ou use a conta demo para ver seus indicadores.
           </Alert>
         ) : (
           <>
             <div className="grid kpis">
-              {Object.entries(labels).map(([k, l]) => (
-                <Card className="card" key={k}>
+              {Object.entries(labels).map(([key, label]) => (
+                <Card className="card" key={key}>
                   <CardContent>
-                    <Typography className="muted" variant="body2">
-                      {l}
+                    <Typography className="muted" variant="body2" component="div">
+                      <LabelWithInfo label={label} info={kpiInfo[key]} />
                     </Typography>
                     <Typography variant="h6" fontWeight={750}>
-                      {k === 'margin'
-                        ? `${d.kpis[k].toFixed(1)}%`
-                        : k === 'orders' || k === 'productsSold'
-                          ? d.kpis[k]
-                          : money(d.kpis[k])}
+                      {formatKpiValue(key, dashboard.kpis[key])}
                     </Typography>
-                    <Typography className="positive" variant="caption">
-                      ↑ 12,4% vs. período anterior
-                    </Typography>
+                    <KpiTrend value={dashboard.comparison?.[key]} />
                   </CardContent>
                 </Card>
               ))}
             </div>
+
             <Card className="card" sx={{ mt: 3 }}>
               <CardContent>
-                <Typography fontWeight={700}>Evolução de faturamento</Typography>
+                <Typography fontWeight={700} component="div">
+                  <LabelWithInfo
+                    label="Evolucao de faturamento"
+                    info="Serie temporal da receita bruta dos pedidos, agrupada por dia dentro do periodo filtrado."
+                  />
+                </Typography>
                 <Box height={270}>
                   <ResponsiveContainer>
-                    <LineChart data={d.series}>
+                    <LineChart data={dashboard.series}>
                       <XAxis dataKey="date" hide />
                       <YAxis />
-                      <Tooltip formatter={(v) => money(Number(v))} />
+                      <Tooltip formatter={(value) => money(Number(value))} />
                       <Line
                         type="monotone"
                         dataKey="revenue"
@@ -113,9 +157,10 @@ export default function Dashboard() {
                 </Box>
               </CardContent>
             </Card>
+
             <Box className="grid" sx={{ gridTemplateColumns: { md: '1fr 1fr' }, mt: 3 }}>
-              <ProductList title="Produtos mais lucrativos" rows={d.topProducts} />
-              <ProductList title="Produtos com margem baixa" rows={d.lowMargin} />
+              <ProductList title="Produtos mais lucrativos" rows={topProducts} />
+              <ProductList title="Produtos com margem baixa" rows={dashboard.lowMargin} />
             </Box>
           </>
         )}
@@ -123,6 +168,44 @@ export default function Dashboard() {
     </Shell>
   );
 }
+
+function formatKpiValue(key: string, value: number) {
+  if (key === 'margin') return `${Number(value || 0).toFixed(1)}%`;
+  if (key === 'orders' || key === 'productsSold') return value || 0;
+  return money(value);
+}
+
+function KpiTrend({ value }: { value?: number | null }) {
+  if (value === undefined || value === null) {
+    return (
+      <Typography className="muted" variant="caption">
+        Sem periodo anterior
+      </Typography>
+    );
+  }
+
+  const className = value > 0 ? 'positive' : value < 0 ? 'negative' : 'muted';
+  const prefix = value > 0 ? '+' : '';
+
+  return (
+    <Typography className={className} variant="caption">
+      {prefix}
+      {value.toFixed(1)}% vs. periodo anterior
+    </Typography>
+  );
+}
+
+function periodDateParams(days: number) {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - Math.max(1, days) + 1);
+
+  return {
+    dateFrom: start.toISOString().slice(0, 10),
+    dateTo: end.toISOString().slice(0, 10),
+  };
+}
+
 function ProductList({ title, rows }: { title: string; rows: any[] }) {
   return (
     <Card className="card">
@@ -131,9 +214,9 @@ function ProductList({ title, rows }: { title: string; rows: any[] }) {
           {title}
         </Typography>
         {rows.length ? (
-          rows.map((x) => (
+          rows.map((item) => (
             <Box
-              key={x.sku}
+              key={item.sku}
               sx={{
                 py: 1.3,
                 display: 'flex',
@@ -144,16 +227,16 @@ function ProductList({ title, rows }: { title: string; rows: any[] }) {
             >
               <Box>
                 <Typography fontSize={14} fontWeight={600}>
-                  {x.name}
+                  {item.name}
                 </Typography>
                 <Typography className="muted" variant="caption">
-                  {x.sku} · {x.quantity} vendas
+                  {item.sku} - {item.quantity} vendas
                 </Typography>
               </Box>
               <Chip
                 size="small"
-                label={`${x.margin.toFixed(1)}%`}
-                color={x.margin < 10 ? 'warning' : 'success'}
+                label={`${item.margin.toFixed(1)}%`}
+                color={item.margin < 10 ? 'warning' : 'success'}
               />
             </Box>
           ))

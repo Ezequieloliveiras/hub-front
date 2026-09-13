@@ -102,7 +102,31 @@ export function ListFilters({
 }: ListFiltersProps) {
   return (
     <Card variant="outlined" sx={{ mb: 2 }}>
-      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+      <CardContent
+        sx={{
+          p: 2,
+          position: 'relative',
+          '&:last-child': { pb: 2 },
+        }}
+      >
+        {loading ? (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 12,
+              right: 16,
+              display: 'grid',
+              placeItems: 'center',
+              width: 24,
+              height: 24,
+              pointerEvents: 'none',
+              zIndex: 1,
+            }}
+          >
+            <CircularProgress size={18} />
+          </Box>
+        ) : null}
+
         {quickFilters?.length ? (
           <ToggleButtonGroup
             exclusive
@@ -140,7 +164,14 @@ export function ListFilters({
           </ToggleButtonGroup>
         ) : null}
 
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2} alignItems="stretch">
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 1.2,
+            alignItems: 'stretch',
+          }}
+        >
           {fields.map((field) =>
             field.type === 'search' ? (
               <DebouncedTextField
@@ -160,8 +191,11 @@ export function ListFilters({
                 InputLabelProps={field.type === 'date' ? { shrink: true } : undefined}
                 onChange={(event) => onChange(field.name, event.target.value)}
                 sx={{
-                  minWidth: { xs: '100%', md: field.minWidth || 150 },
-                  flex: field.type === 'date' ? '0 0 auto' : 'initial',
+                  minWidth: { xs: '100%', md: field.minWidth || 144 },
+                  flex: {
+                    xs: '1 1 100%',
+                    md: field.type === 'date' ? '0 1 150px' : '1 1 150px',
+                  },
                 }}
               >
                 {field.options?.map((option) => (
@@ -181,7 +215,10 @@ export function ListFilters({
                 label="Ordenar por"
                 value={values.sortBy || ''}
                 onChange={(event) => onChange('sortBy', event.target.value)}
-                sx={{ minWidth: { xs: '100%', md: 160 } }}
+                sx={{
+                  minWidth: { xs: '100%', md: 150 },
+                  flex: { xs: '1 1 100%', md: '1 1 150px' },
+                }}
               >
                 {sortOptions.map((option) => (
                   <MenuItem key={option.value} value={option.value}>
@@ -195,7 +232,10 @@ export function ListFilters({
                 label="Direcao"
                 value={values.sortOrder || 'desc'}
                 onChange={(event) => onChange('sortOrder', event.target.value)}
-                sx={{ minWidth: { xs: '100%', md: 130 } }}
+                sx={{
+                  minWidth: { xs: '100%', md: 120 },
+                  flex: { xs: '1 1 100%', md: '0 1 120px' },
+                }}
               >
                 <MenuItem value="desc">Desc</MenuItem>
                 <MenuItem value="asc">Asc</MenuItem>
@@ -209,16 +249,11 @@ export function ListFilters({
             startIcon={<FilterAltOff />}
             disabled={!hasActiveFilters}
             onClick={onClear}
-            sx={{ height: 40, whiteSpace: 'nowrap' }}
+            sx={{ height: 40, whiteSpace: 'nowrap', flex: { xs: '1 1 100%', md: '0 0 auto' } }}
           >
             Limpar
           </Button>
-          {loading ? (
-            <Box sx={{ display: 'grid', placeItems: 'center', minWidth: 40 }}>
-              <CircularProgress size={18} />
-            </Box>
-          ) : null}
-        </Stack>
+        </Box>
       </CardContent>
     </Card>
   );
@@ -256,7 +291,10 @@ function DebouncedTextField({
       InputProps={{
         startAdornment: <Search fontSize="small" sx={{ mr: 1, color: 'text.disabled' }} />,
       }}
-      sx={{ minWidth: { xs: '100%', md: field.minWidth || 340 }, flex: 1 }}
+      sx={{
+        minWidth: { xs: '100%', md: field.minWidth || 320 },
+        flex: { xs: '1 1 100%', md: '999 1 320px' },
+      }}
     />
   );
 }

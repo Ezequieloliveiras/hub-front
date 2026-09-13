@@ -41,6 +41,7 @@ import {
   WarningAmber,
 } from '@mui/icons-material';
 import Shell from '@/components/Shell';
+import { LabelWithInfo } from '@/components/InfoHint';
 import { api, money } from '@/lib/api';
 
 type ConfirmAction = 'pause' | 'activate' | 'close' | null;
@@ -483,7 +484,11 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                       </Grid>
                       <Divider />
                       <Grid container spacing={2}>
-                        <Metric label="Preco" value={money(Number(listing.price))} />
+                        <Metric
+                          label="Preco"
+                          value={money(Number(listing.price))}
+                          info="Preco atual do anuncio sincronizado do marketplace."
+                        />
                         <Metric label="Estoque" value={`${listing.availableQuantity} unidades`} />
                         <Metric label="Vendidos" value={listing.soldQuantity} />
                       </Grid>
@@ -515,14 +520,17 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                   <PerformanceCard
                     label="Faturamento 30 dias"
                     value={money(listing.performance?.last30Days?.revenue || 0)}
+                    info="Soma do valor bruto vendido por este anuncio nos ultimos 30 dias."
                   />
                   <PerformanceCard
                     label="Lucro 30 dias"
                     value={money(listing.performance?.last30Days?.profit || 0)}
+                    info="Receita dos ultimos 30 dias menos taxas, frete, descontos, custo dos produtos e impostos estimados."
                   />
                   <PerformanceCard
                     label="Margem 30 dias"
                     value={typeof margin30Days === 'number' ? `${margin30Days.toFixed(1)}%` : '--'}
+                    info="Lucro estimado dos ultimos 30 dias dividido pelo faturamento do mesmo periodo."
                   />
                 </Grid>
               </CardContent>
@@ -951,23 +959,23 @@ function Info({ label, value }: { label: string; value: any }) {
   );
 }
 
-function Metric({ label, value }: { label: string; value: any }) {
+function Metric({ label, value, info }: { label: string; value: any; info?: string }) {
   return (
     <Grid item xs={4}>
-      <Typography className="muted" variant="caption">
-        {label}
+      <Typography className="muted" variant="caption" component="div">
+        {info ? <LabelWithInfo label={label} info={info} /> : label}
       </Typography>
       <Typography fontWeight={800}>{value}</Typography>
     </Grid>
   );
 }
 
-function PerformanceCard({ label, value }: { label: string; value: any }) {
+function PerformanceCard({ label, value, info }: { label: string; value: any; info?: string }) {
   return (
     <Grid item xs={6}>
       <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2, p: 1.5, minHeight: 86 }}>
-        <Typography className="muted" variant="caption">
-          {label}
+        <Typography className="muted" variant="caption" component="div">
+          {info ? <LabelWithInfo label={label} info={info} /> : label}
         </Typography>
         <Typography fontWeight={800} fontSize={22}>
           {value}

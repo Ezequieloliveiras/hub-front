@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Card, CardContent, CircularProgress, Typography } from '@mui/material';
 import Shell from '@/components/Shell';
+import { LabelWithInfo } from '@/components/InfoHint';
 import { hasFilters, ListFilters, periodOptions, useListQuery } from '@/components/ListControls';
 import { api, money } from '@/lib/api';
 
@@ -35,10 +36,26 @@ export default function Dre() {
 
   const k = dashboard?.kpis || {};
   const rows = [
-    ['Receita bruta', k.revenue],
-    ['(-) Taxas dos marketplaces', -Number(k.fees || 0)],
-    ['(-) Custo dos produtos', -Number(k.cost || 0)],
-    ['= Lucro estimado', k.profit],
+    {
+      label: 'Receita bruta',
+      value: k.revenue,
+      info: 'Soma do valor bruto dos pedidos no periodo filtrado.',
+    },
+    {
+      label: '(-) Taxas dos marketplaces',
+      value: -Number(k.fees || 0),
+      info: 'Soma das taxas cobradas pelos marketplaces nos pedidos do periodo.',
+    },
+    {
+      label: '(-) Custo dos produtos',
+      value: -Number(k.cost || 0),
+      info: 'Soma do custo cadastrado dos produtos vendidos no periodo.',
+    },
+    {
+      label: '= Lucro estimado',
+      value: k.profit,
+      info: 'Receita bruta menos taxas, frete, descontos, custo dos produtos e impostos estimados.',
+    },
   ];
 
   return (
@@ -77,9 +94,9 @@ export default function Dre() {
             {loading && !dashboard ? (
               <CircularProgress />
             ) : (
-              rows.map(([label, value]: any) => (
+              rows.map((row) => (
                 <div
-                  key={label}
+                  key={row.label}
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -87,8 +104,10 @@ export default function Dre() {
                     borderBottom: '1px solid #eee',
                   }}
                 >
-                  <b>{label}</b>
-                  <b>{money(value)}</b>
+                  <b>
+                    <LabelWithInfo label={row.label} info={row.info} />
+                  </b>
+                  <b>{money(row.value)}</b>
                 </div>
               ))
             )}

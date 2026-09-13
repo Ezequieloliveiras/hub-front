@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, Chip, CircularProgress, Typography } from '@mui/material';
 import Shell from '@/components/Shell';
+import { LabelWithInfo } from '@/components/InfoHint';
 import {
   hasFilters,
   ListFilters,
@@ -104,10 +105,30 @@ export default function Sales() {
                     <th>Data</th>
                     <th>Cliente</th>
                     <th>Produto/SKU</th>
-                    <th>Bruto</th>
-                    <th>Taxas</th>
-                    <th>Lucro</th>
-                    <th>Margem</th>
+                    <th>
+                      <LabelWithInfo
+                        label="Bruto"
+                        info="Valor bruto do pedido recebido do marketplace antes de taxas, custos, descontos e impostos."
+                      />
+                    </th>
+                    <th>
+                      <LabelWithInfo
+                        label="Taxas"
+                        info="Taxas do marketplace associadas ao pedido sincronizado."
+                      />
+                    </th>
+                    <th>
+                      <LabelWithInfo
+                        label="Lucro"
+                        info="Estimativa: valor bruto menos taxas, frete, descontos, custo dos produtos e impostos."
+                      />
+                    </th>
+                    <th>
+                      <LabelWithInfo
+                        label="Margem"
+                        info="Lucro estimado dividido pelo valor bruto do pedido."
+                      />
+                    </th>
                     <th>Status</th>
                   </tr>
                 </thead>
