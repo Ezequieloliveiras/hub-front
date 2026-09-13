@@ -78,7 +78,7 @@ export default function Dashboard() {
           }}
         >
           <Box>
-            <Typography variant="h4" fontWeight={800}>
+            <Typography variant="h4" fontWeight={600}>
               Visao geral
             </Typography>
             <Typography className="muted">Acompanhe o pulso da sua operacao.</Typography>
@@ -122,7 +122,7 @@ export default function Dashboard() {
                     <Typography className="muted" variant="body2" component="div">
                       <LabelWithInfo label={label} info={kpiInfo[key]} />
                     </Typography>
-                    <Typography variant="h6" fontWeight={750}>
+                    <Typography variant="h6" fontWeight={600}>
                       {formatKpiValue(key, dashboard.kpis[key])}
                     </Typography>
                     <KpiTrend value={dashboard.comparison?.[key]} />
@@ -133,7 +133,7 @@ export default function Dashboard() {
 
             <Card className="card" sx={{ mt: 3 }}>
               <CardContent>
-                <Typography fontWeight={700} component="div">
+                <Typography fontWeight={600} component="div">
                   <LabelWithInfo
                     label="Evolucao de faturamento"
                     info="Serie temporal da receita bruta dos pedidos, agrupada por dia dentro do periodo filtrado."
@@ -210,7 +210,7 @@ function ProductList({ title, rows }: { title: string; rows: any[] }) {
   return (
     <Card className="card">
       <CardContent>
-        <Typography fontWeight={700} mb={1}>
+        <Typography fontWeight={600} mb={1}>
           {title}
         </Typography>
         {rows.length ? (

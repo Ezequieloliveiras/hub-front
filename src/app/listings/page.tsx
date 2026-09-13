@@ -87,7 +87,7 @@ export default function Listings() {
       <div className="page">
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Box>
-            <Typography variant="h4" fontWeight={800}>
+            <Typography variant="h4" fontWeight={600}>
               Anuncios
             </Typography>
             <Typography className="muted">

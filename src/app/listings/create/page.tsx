@@ -44,7 +44,7 @@ export default function CreateListingPage() {
             <Button component={Link} href="/listings" startIcon={<ArrowBack />} sx={{ mb: 1 }}>
               Voltar
             </Button>
-            <Typography variant="h4" fontWeight={800}>
+            <Typography variant="h4" fontWeight={600}>
               Criar anúncio
             </Typography>
             <Typography className="muted">
@@ -80,7 +80,7 @@ export default function CreateListingPage() {
                           />
                         </Stack>
                         <Box>
-                          <Typography fontWeight={800}>{marketplace.name}</Typography>
+                          <Typography fontWeight={600}>{marketplace.name}</Typography>
                           <Typography className="muted" variant="body2">
                             {marketplace.message ||
                               'Crie anúncios usando metadados e validações do marketplace.'}

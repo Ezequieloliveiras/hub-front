@@ -439,7 +439,7 @@ export default function MercadoLivreListingForm({ integrationId }: { integration
                     <Grid item xs={12} md={6} key={categoryId}>
                       <Card variant="outlined">
                         <CardContent>
-                          <Typography fontWeight={800}>{categoryName}</Typography>
+                          <Typography fontWeight={600}>{categoryName}</Typography>
                           <Typography className="muted" variant="body2">
                             {categoryId}
                             {totalItems !== null ? ` - ${totalItems} anúncios` : ''}
@@ -514,7 +514,7 @@ export default function MercadoLivreListingForm({ integrationId }: { integration
                 </Grid>
               </Grid>
 
-              <Typography fontWeight={800}>Atributos obrigatórios</Typography>
+              <Typography fontWeight={600}>Atributos obrigatórios</Typography>
               <Grid container spacing={2}>
                 {requiredAttributes.map((attribute) => (
                   <Grid item xs={12} sm={6} key={attribute.id}>
@@ -536,7 +536,7 @@ export default function MercadoLivreListingForm({ integrationId }: { integration
 
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMore />}>
-                  <Typography fontWeight={800}>Atributos opcionais importantes</Typography>
+                  <Typography fontWeight={600}>Atributos opcionais importantes</Typography>
                 </AccordionSummary>
                 <AccordionDetails>
                   <Grid container spacing={2}>
@@ -582,7 +582,7 @@ export default function MercadoLivreListingForm({ integrationId }: { integration
                   />
                 </Grid>
                 <Grid item xs={12}>
-                  <Typography fontWeight={800} mb={1}>
+                  <Typography fontWeight={600} mb={1}>
                     Imagens
                   </Typography>
                   <Stack spacing={1}>
@@ -788,7 +788,7 @@ function Review({ label, value }: { label: string; value: any }) {
       <Typography className="muted" variant="caption">
         {label}
       </Typography>
-      <Typography fontWeight={800}>{value || '-'}</Typography>
+      <Typography fontWeight={600}>{value || '-'}</Typography>
     </Grid>
   );
 }

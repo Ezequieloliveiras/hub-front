@@ -469,7 +469,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                         <Typography className="muted" variant="caption">
                           Titulo
                         </Typography>
-                        <Typography fontWeight={800}>{listing.title}</Typography>
+                        <Typography fontWeight={600}>{listing.title}</Typography>
                       </Box>
                       <Grid container spacing={2}>
                         <Info label="Marketplace" value="Mercado Livre" />
@@ -509,7 +509,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
           <Grid item xs={12} lg={5}>
             <Card sx={{ height: '100%' }}>
               <CardContent>
-                <Typography fontWeight={800} mb={2}>
+                <Typography fontWeight={600} mb={2}>
                   Performance
                 </Typography>
                 <Grid container spacing={1.5}>
@@ -540,7 +540,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
           <Grid item xs={12}>
             <Card>
               <CardContent>
-                <Typography fontWeight={800} mb={2}>
+                <Typography fontWeight={600} mb={2}>
                   Historico de acoes
                 </Typography>
                 {!listing.actionLogs?.length ? (
@@ -560,7 +560,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                           }}
                         />
                         <Box>
-                          <Typography fontWeight={700}>{formatAction(log)}</Typography>
+                          <Typography fontWeight={600}>{formatAction(log)}</Typography>
                           <Typography className="muted" variant="body2">
                             {new Date(log.createdAt).toLocaleString('pt-BR')}
                             {log.errorMessage ? ` - ${log.errorMessage}` : ''}
@@ -607,7 +607,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
           <DialogContent>
             <Stack spacing={3} mt={1}>
               <Box>
-                <Typography fontWeight={800} mb={1}>
+                <Typography fontWeight={600} mb={1}>
                   Dados de venda
                 </Typography>
                 <Grid container spacing={2}>
@@ -692,7 +692,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
               <Divider />
 
               <Box>
-                <Typography fontWeight={800} mb={1}>
+                <Typography fontWeight={600} mb={1}>
                   Midia
                 </Typography>
                 <Stack spacing={1.5}>
@@ -800,7 +800,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
               <Divider />
 
               <Box>
-                <Typography fontWeight={800} mb={1}>
+                <Typography fontWeight={600} mb={1}>
                   Publicacao
                 </Typography>
                 <Grid container spacing={2}>
@@ -954,7 +954,7 @@ function Info({ label, value }: { label: string; value: any }) {
       <Typography className="muted" variant="caption">
         {label}
       </Typography>
-      <Typography fontWeight={700}>{value || '-'}</Typography>
+      <Typography fontWeight={600}>{value || '-'}</Typography>
     </Grid>
   );
 }
@@ -965,7 +965,7 @@ function Metric({ label, value, info }: { label: string; value: any; info?: stri
       <Typography className="muted" variant="caption" component="div">
         {info ? <LabelWithInfo label={label} info={info} /> : label}
       </Typography>
-      <Typography fontWeight={800}>{value}</Typography>
+      <Typography fontWeight={600}>{value}</Typography>
     </Grid>
   );
 }
@@ -977,7 +977,7 @@ function PerformanceCard({ label, value, info }: { label: string; value: any; in
         <Typography className="muted" variant="caption" component="div">
           {info ? <LabelWithInfo label={label} info={info} /> : label}
         </Typography>
-        <Typography fontWeight={800} fontSize={22}>
+        <Typography fontWeight={600} fontSize={22}>
           {value}
         </Typography>
       </Box>

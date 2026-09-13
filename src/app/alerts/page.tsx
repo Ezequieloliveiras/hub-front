@@ -64,7 +64,7 @@ export default function Alerts() {
   return (
     <Shell>
       <div className="page">
-        <Typography variant="h4" fontWeight={800} mb={3}>
+        <Typography variant="h4" fontWeight={600} mb={3}>
           Alertas
         </Typography>
 
@@ -125,7 +125,7 @@ export default function Alerts() {
                       {new Date(alert.createdAt).toLocaleString('pt-BR')}
                     </Typography>
                   </Stack>
-                  <Typography fontWeight={700} mt={1}>
+                  <Typography fontWeight={600} mt={1}>
                     {alert.title}
                   </Typography>
                   <Typography className="muted">{alert.description}</Typography>

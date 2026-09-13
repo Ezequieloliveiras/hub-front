@@ -61,7 +61,7 @@ export default function Products() {
   return (
     <Shell>
       <div className="page">
-        <Typography variant="h4" fontWeight={800} mb={3}>
+        <Typography variant="h4" fontWeight={600} mb={3}>
           Produtos
         </Typography>
 

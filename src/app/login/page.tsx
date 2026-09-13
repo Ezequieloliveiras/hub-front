@@ -21,7 +21,7 @@ export default function Login() {
     <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', p: 2 }}>
       <Card sx={{ width: '100%', maxWidth: 430 }}>
         <CardContent sx={{ p: 4 }}>
-          <Typography variant="h4" fontWeight={800} color="primary">
+          <Typography variant="h4" fontWeight={600} color="primary">
             seller pulse
           </Typography>
           <Typography className="muted" mb={3}>

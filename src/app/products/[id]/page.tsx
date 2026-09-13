@@ -30,13 +30,13 @@ export default function Product({ params }: { params: Promise<{ id: string }> })
   return (
     <Shell>
       <div className="page">
-        <Typography variant="h4" fontWeight={800}>
+        <Typography variant="h4" fontWeight={600}>
           {product.name}
         </Typography>
         <Typography className="muted">SKU {product.sku}</Typography>
         <Card sx={{ mt: 3, maxWidth: 500 }}>
           <CardContent>
-            <Typography fontWeight={700} component="div">
+            <Typography fontWeight={600} component="div">
               <LabelWithInfo
                 label="Custo unitario"
                 info="Custo unitario cadastrado para o produto. Este valor entra nos calculos de lucro, margem e DRE."

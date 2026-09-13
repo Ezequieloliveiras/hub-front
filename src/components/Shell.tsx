@@ -112,7 +112,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             slotProps={{ paper: { elevation: 3, sx: { mt: 1, minWidth: 220, borderRadius: 2 } } }}
           >
             <Box sx={{ px: 2, py: 1.25 }}>
-              <Typography fontWeight={700} variant="body2">
+              <Typography fontWeight={600} variant="body2">
                 Demo Seller
               </Typography>
               <Typography className="muted" variant="caption">

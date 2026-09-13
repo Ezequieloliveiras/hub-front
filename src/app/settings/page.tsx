@@ -11,12 +11,12 @@ export default function Settings() {
   return (
     <Shell>
       <div className="page">
-        <Typography variant="h4" fontWeight={800} mb={3}>
+        <Typography variant="h4" fontWeight={600} mb={3}>
           Configurações
         </Typography>
         <Card sx={{ maxWidth: 600 }}>
           <CardContent>
-            <Typography variant="h6" fontWeight={700}>
+            <Typography variant="h6" fontWeight={600}>
               Empresa
             </Typography>
             <TextField
@@ -55,7 +55,7 @@ export default function Settings() {
         </Card>
         <Card sx={{ maxWidth: 600, mt: 2 }}>
           <CardContent>
-            <Typography fontWeight={700}>Assinatura</Typography>
+            <Typography fontWeight={600}>Assinatura</Typography>
             <Typography className="muted">Plano atual: Free / Trial</Typography>
             <Button disabled>Gerenciar assinatura</Button>
           </CardContent>

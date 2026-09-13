@@ -299,7 +299,7 @@ export default function Integrations() {
     <Shell>
       <div className="page">
         <Stack spacing={0.5} sx={{ mb: 3.5 }}>
-          <Typography variant="h4" fontWeight={800}>
+          <Typography variant="h4" fontWeight={600}>
             Integracoes
           </Typography>
           <Typography className="muted">Conecte seus canais e centralize a operacao.</Typography>
@@ -403,7 +403,7 @@ export default function Integrations() {
                     </Stack>
                   </Box>
                   <Box sx={{ mt: 2 }}>
-                    <Typography variant="h6" fontWeight={750}>
+                    <Typography variant="h6" fontWeight={600}>
                       {app.name}
                     </Typography>
                     <Typography
