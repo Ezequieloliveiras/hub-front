@@ -79,7 +79,7 @@ export default function Dashboard() {
         >
           <Box>
             <Typography variant="h4" fontWeight={600}>
-              Visao geral
+              Visão geral
             </Typography>
             <Typography className="muted">Acompanhe o pulso da sua operacao.</Typography>
           </Box>
@@ -90,8 +90,8 @@ export default function Dashboard() {
               onChange={(event) => setPeriod(event.target.value)}
               sx={{ height: 40 }}
             >
-              <MenuItem value="7">Ultimos 7 dias</MenuItem>
-              <MenuItem value="30">Ultimos 30 dias</MenuItem>
+              <MenuItem value="7">Últimos 7 dias</MenuItem>
+              <MenuItem value="30">Últimos 30 dias</MenuItem>
             </Select>
             <Select
               size="small"

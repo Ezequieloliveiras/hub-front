@@ -241,7 +241,7 @@ export default function MercadoLivreListingForm({ integrationId }: { integration
       setCategoryTrail([]);
       setCategoryNotice(
         items.length
-          ? 'Sugestoes do Mercado Livre para esta busca.'
+          ? 'Sugestões do Mercado Livre para esta busca.'
           : 'Nenhuma categoria encontrada. Tente buscar pelo nome do produto.',
       );
     } finally {
@@ -683,8 +683,10 @@ export default function MercadoLivreListingForm({ integrationId }: { integration
               </Grid>
               {catalogOptions.length > 0 && (
                 <Alert severity="info">
-                  Encontramos {catalogOptions.length} possível(is) produto(s) de catálogo para esta
-                  busca. A vinculação automática de catálogo fica preparada para a próxima etapa.
+                  Encontramos {catalogOptions.length}{' '}
+                  {catalogOptions.length === 1 ? 'possível produto' : 'possíveis produtos'} de
+                  catálogo para esta busca. A vinculação automática de catálogo fica preparada para
+                  a próxima etapa.
                 </Alert>
               )}
               <Stack direction="row" spacing={1} flexWrap="wrap">

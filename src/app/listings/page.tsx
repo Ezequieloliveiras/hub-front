@@ -41,11 +41,11 @@ const quickFilters = [
 
 const sortOptions = [
   { label: 'Atualizacao', value: 'updatedAt' },
-  { label: 'Sincronizacao', value: 'lastSyncedAt' },
-  { label: 'Titulo', value: 'title' },
-  { label: 'Preco', value: 'price' },
+  { label: 'Sincronização', value: 'lastSyncedAt' },
+  { label: 'Título', value: 'title' },
+  { label: 'Preço', value: 'price' },
   { label: 'Estoque', value: 'availableQuantity' },
-  { label: 'Criacao', value: 'createdAt' },
+  { label: 'Criação', value: 'createdAt' },
 ];
 
 export default function Listings() {
@@ -88,10 +88,10 @@ export default function Listings() {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Box>
             <Typography variant="h4" fontWeight={600}>
-              Anuncios
+              Anúncios
             </Typography>
             <Typography className="muted">
-              Acompanhe e gerencie seus anuncios nos marketplaces conectados.
+              Acompanhe e gerencie seus anúncios nos marketplaces conectados.
             </Typography>
           </Box>
           <Stack direction="row" spacing={1}>
@@ -101,7 +101,7 @@ export default function Listings() {
               href="/listings/create"
               startIcon={<PostAdd />}
             >
-              Criar anuncio
+              Criar anúncio
             </Button>
             <Button
               variant="outlined"
@@ -109,7 +109,7 @@ export default function Listings() {
               disabled={syncing}
               onClick={sync}
             >
-              Sincronizar anuncios
+              Sincronizar anúncios
             </Button>
           </Stack>
         </Box>
@@ -120,7 +120,7 @@ export default function Listings() {
               name: 'search',
               label: 'Buscar',
               type: 'search',
-              placeholder: 'Buscar titulo, SKU, MLB, codigo Shopee...',
+              placeholder: 'Buscar título, SKU, MLB, código Shopee...',
             },
             {
               name: 'marketplace',
@@ -153,17 +153,17 @@ export default function Listings() {
             {loading && !data ? (
               <CircularProgress />
             ) : items.length === 0 ? (
-              <Typography className="muted">Nenhum anuncio encontrado.</Typography>
+              <Typography className="muted">Nenhum anúncio encontrado.</Typography>
             ) : (
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Titulo</th>
+                    <th>Título</th>
                     <th>ID</th>
                     <th>
                       <LabelWithInfo
-                        label="Preco"
-                        info="Preco atual do anuncio sincronizado do marketplace."
+                        label="Preço"
+                        info="Preço atual do anúncio sincronizado do marketplace."
                       />
                     </th>
                     <th>Estoque</th>
@@ -192,7 +192,7 @@ export default function Listings() {
                           {formatDateTime(item.lastSyncedAt || item.createdAt)}
                         </Typography>
                         <Typography className="muted" variant="caption">
-                          {item.lastSyncedAt ? 'Ultima sincronizacao' : 'Importado/criado'}
+                          {item.lastSyncedAt ? 'Última sincronização' : 'Importado/criado'}
                         </Typography>
                       </td>
                       <td>

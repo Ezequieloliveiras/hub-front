@@ -145,7 +145,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
       raw.condition;
     if (value === 'new') return 'Novo';
     if (value === 'used') return 'Usado';
-    return value || 'Nao informado';
+    return value || 'Não informado';
   }, [raw]);
 
   const load = async (listingId: string) => {
@@ -177,7 +177,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
       loadListingTypeOptions(listingId);
       loadCategoryOptions(listingId);
     } catch {
-      setErr('Nao foi possivel carregar este anuncio.');
+      setErr('Não foi possível carregar este anúncio.');
     }
   };
 
@@ -226,7 +226,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
       await load(id);
       setSnackbar(success);
     } catch (error: any) {
-      setSnackbar(error?.response?.data?.message || 'Nao foi possivel concluir a acao.');
+      setSnackbar(error?.response?.data?.message || 'Não foi possível concluir a ação.');
     } finally {
       setLoadingAction('');
       setConfirmAction(null);
@@ -283,27 +283,27 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
         await Promise.all(calls);
         setEditOpen(false);
       },
-      'Anuncio atualizado com sucesso.',
+      'Anúncio atualizado com sucesso.',
     );
   };
 
   const confirmCopy = {
     pause: {
-      title: 'Pausar anuncio',
+      title: 'Pausar anúncio',
       text: 'Enquanto estiver pausado, ele deixara de ficar disponivel para novas vendas no Mercado Livre.',
-      action: 'Pausar anuncio',
+      action: 'Pausar anúncio',
       loading: 'Pausando...',
     },
     activate: {
-      title: 'Reativar anuncio',
-      text: 'O anuncio voltara a ficar disponivel no Mercado Livre se as regras da plataforma permitirem.',
-      action: 'Reativar anuncio',
+      title: 'Reativar anúncio',
+      text: 'O anúncio voltará a ficar disponível no Mercado Livre se as regras da plataforma permitirem.',
+      action: 'Reativar anúncio',
       loading: 'Reativando...',
     },
     close: {
-      title: 'Encerrar anuncio',
-      text: 'Essa acao pode nao ser reversivel. O Mercado Livre informa que anuncios encerrados nao podem ser ativados novamente, mas podem ser republicados.',
-      action: 'Encerrar anuncio',
+      title: 'Encerrar anúncio',
+      text: 'Essa ação pode não ser reversível. O Mercado Livre informa que anúncios encerrados não podem ser ativados novamente, mas podem ser republicados.',
+      action: 'Encerrar anúncio',
       loading: 'Encerrando...',
     },
   };
@@ -326,7 +326,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
         <div className="page">
           <Alert severity="error">{err}</Alert>
           <Button component={Link} href="/listings" startIcon={<ArrowBack />} sx={{ mt: 2 }}>
-            Voltar para anuncios
+            Voltar para anúncios
           </Button>
         </div>
       </Shell>
@@ -364,7 +364,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
               <Typography className="muted">
                 Mercado Livre - {listing.externalId}
                 {listing.lastSyncedAt
-                  ? ` - Ultima sincronizacao ${new Date(listing.lastSyncedAt).toLocaleString('pt-BR')}`
+                  ? ` - Última sincronização ${new Date(listing.lastSyncedAt).toLocaleString('pt-BR')}`
                   : ''}
               </Typography>
             </Stack>
@@ -379,7 +379,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                 run(
                   'sync',
                   () => api.post(`/listings/${id}/sync`),
-                  'Anuncio sincronizado com sucesso.',
+                  'Anúncio sincronizado com sucesso.',
                 )
               }
             >
@@ -467,7 +467,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                     <Stack spacing={2}>
                       <Box>
                         <Typography className="muted" variant="caption">
-                          Titulo
+                          Título
                         </Typography>
                         <Typography fontWeight={600}>{listing.title}</Typography>
                       </Box>
@@ -478,16 +478,16 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                           label="SKU"
                           value={listing.externalSku || listing.product?.sku || '-'}
                         />
-                        <Info label="Condicao" value={condition} />
-                        <Info label="Tipo" value={raw.listing_type_id || 'Nao informado'} />
-                        <Info label="Categoria" value={raw.category_id || 'Nao informado'} />
+                        <Info label="Condição" value={condition} />
+                        <Info label="Tipo" value={raw.listing_type_id || 'Não informado'} />
+                        <Info label="Categoria" value={raw.category_id || 'Não informado'} />
                       </Grid>
                       <Divider />
                       <Grid container spacing={2}>
                         <Metric
-                          label="Preco"
+                          label="Preço"
                           value={money(Number(listing.price))}
-                          info="Preco atual do anuncio sincronizado do marketplace."
+                          info="Preço atual do anúncio sincronizado do marketplace."
                         />
                         <Metric label="Estoque" value={`${listing.availableQuantity} unidades`} />
                         <Metric label="Vendidos" value={listing.soldQuantity} />
@@ -497,7 +497,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                         startIcon={<Edit />}
                         onClick={() => setEditOpen(true)}
                       >
-                        Editar anuncio
+                        Editar anúncio
                       </Button>
                     </Stack>
                   </Grid>
@@ -520,17 +520,17 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                   <PerformanceCard
                     label="Faturamento 30 dias"
                     value={money(listing.performance?.last30Days?.revenue || 0)}
-                    info="Soma do valor bruto vendido por este anuncio nos ultimos 30 dias."
+                    info="Soma do valor bruto vendido por este anúncio nos últimos 30 dias."
                   />
                   <PerformanceCard
                     label="Lucro 30 dias"
                     value={money(listing.performance?.last30Days?.profit || 0)}
-                    info="Receita dos ultimos 30 dias menos taxas, frete, descontos, custo dos produtos e impostos estimados."
+                    info="Receita dos últimos 30 dias menos taxas, frete, descontos, custo dos produtos e impostos estimados."
                   />
                   <PerformanceCard
                     label="Margem 30 dias"
                     value={typeof margin30Days === 'number' ? `${margin30Days.toFixed(1)}%` : '--'}
-                    info="Lucro estimado dos ultimos 30 dias dividido pelo faturamento do mesmo periodo."
+                    info="Lucro estimado dos últimos 30 dias dividido pelo faturamento do mesmo período."
                   />
                 </Grid>
               </CardContent>
@@ -579,11 +579,11 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
         <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
           <MenuItem disabled={isBusy} onClick={() => openConfirmAction('pause')}>
             <PauseCircle fontSize="small" style={{ marginRight: 8 }} />
-            Pausar anuncio
+            Pausar anúncio
           </MenuItem>
           <MenuItem disabled={isBusy} onClick={() => openConfirmAction('activate')}>
             <PlayCircle fontSize="small" style={{ marginRight: 8 }} />
-            Reativar anuncio
+            Reativar anúncio
           </MenuItem>
           <MenuItem
             disabled={isBusy}
@@ -591,7 +591,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
             sx={{ color: 'error.main' }}
           >
             <WarningAmber fontSize="small" style={{ marginRight: 8 }} />
-            Encerrar anuncio
+            Encerrar anúncio
           </MenuItem>
         </Menu>
 
@@ -603,7 +603,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
           fullWidth
           maxWidth="md"
         >
-          <DialogTitle>Editar anuncio</DialogTitle>
+          <DialogTitle>Editar anúncio</DialogTitle>
           <DialogContent>
             <Stack spacing={3} mt={1}>
               <Box>
@@ -614,16 +614,16 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                   <Grid item xs={12}>
                     <TextField
                       fullWidth
-                      label="Titulo"
+                      label="Título"
                       value={form.title}
-                      helperText="Se o Mercado Livre nao permitir alterar este campo, a alteracao sera recusada sem mudar o banco local."
+                      helperText="Se o Mercado Livre não permitir alterar este campo, a alteração será recusada sem mudar o banco local."
                       onChange={(event) => setForm({ ...form, title: event.target.value })}
                     />
                   </Grid>
                   <Grid item xs={12} sm={4}>
                     <TextField
                       fullWidth
-                      label="Novo preco"
+                      label="Novo preço"
                       value={form.price}
                       inputMode="decimal"
                       InputProps={{
@@ -743,7 +743,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                           value={url}
                           helperText={
                             index === 0
-                              ? 'A primeira imagem vira a principal do anuncio.'
+                              ? 'A primeira imagem vira a principal do anúncio.'
                               : 'URL publica da imagem.'
                           }
                           onChange={(event) => {
@@ -801,19 +801,19 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
 
               <Box>
                 <Typography fontWeight={600} mb={1}>
-                  Publicacao
+                  Publicação
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
                     <TextField
                       select
                       fullWidth
-                      label="Tipo de anuncio"
+                      label="Tipo de anúncio"
                       value={form.listingTypeId}
                       helperText={
                         loadingListingTypes
                           ? 'Buscando opcoes no Mercado Livre...'
-                          : 'O Mercado Livre informa que o tipo de publicacao so pode ser alterado uma vez.'
+                          : 'O Mercado Livre informa que o tipo de publicação só pode ser alterado uma vez.'
                       }
                       onChange={(event) => setForm({ ...form, listingTypeId: event.target.value })}
                     >
@@ -833,7 +833,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                       helperText={
                         loadingCategories
                           ? 'Buscando categorias sugeridas no Mercado Livre...'
-                          : 'Categorias sugeridas pelo Mercado Livre com base no titulo do anuncio.'
+                          : 'Categorias sugeridas pelo Mercado Livre com base no título do anúncio.'
                       }
                       onChange={(event) => setForm({ ...form, categoryId: event.target.value })}
                     >
@@ -887,10 +887,10 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                       action,
                       () => api.post(`/listings/${id}/${endpoint}`),
                       action === 'pause'
-                        ? 'Anuncio pausado com sucesso.'
+                        ? 'Anúncio pausado com sucesso.'
                         : action === 'activate'
-                          ? 'Anuncio reativado com sucesso.'
-                          : 'Anuncio encerrado com sucesso.',
+                          ? 'Anúncio reativado com sucesso.'
+                          : 'Anúncio encerrado com sucesso.',
                     );
                   }}
                 >
@@ -912,7 +912,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
           fullWidth
           maxWidth="md"
         >
-          <DialogTitle>Imagem do anuncio</DialogTitle>
+          <DialogTitle>Imagem do anúncio</DialogTitle>
           <DialogContent>
             {modalImageUrl ? (
               <Box
@@ -922,7 +922,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                 sx={{ width: '100%', maxHeight: '70vh', objectFit: 'contain', bgcolor: '#f3f5f8' }}
               />
             ) : (
-              <Typography className="muted">Este anuncio nao possui imagem disponivel.</Typography>
+              <Typography className="muted">Este anúncio não possui imagem disponível.</Typography>
             )}
           </DialogContent>
           <DialogActions>
@@ -987,16 +987,16 @@ function PerformanceCard({ label, value, info }: { label: string; value: any; in
 
 function formatAction(log: any) {
   const labels: Record<string, string> = {
-    PRICE_UPDATED: 'Preco alterado',
+    PRICE_UPDATED: 'Preço alterado',
     STOCK_UPDATED: 'Estoque alterado',
-    TITLE_UPDATED: 'Titulo alterado',
+    TITLE_UPDATED: 'Título alterado',
     PICTURES_UPDATED: 'Imagens atualizadas',
-    LISTING_TYPE_UPDATED: 'Tipo de anuncio alterado',
+    LISTING_TYPE_UPDATED: 'Tipo de anúncio alterado',
     CATEGORY_UPDATED: 'Categoria alterada',
-    PAUSED: 'Anuncio pausado',
-    ACTIVATED: 'Anuncio reativado',
-    CLOSED: 'Anuncio encerrado',
-    SYNCED: 'Anuncio sincronizado',
+    PAUSED: 'Anúncio pausado',
+    ACTIVATED: 'Anúncio reativado',
+    CLOSED: 'Anúncio encerrado',
+    SYNCED: 'Anúncio sincronizado',
   };
   return labels[log.action] || log.action;
 }

@@ -26,7 +26,7 @@ const quickFilters = [
   { label: 'Em estoque', value: 'in' },
   { label: 'Estoque baixo', value: 'low' },
   { label: 'Sem estoque', value: 'out' },
-  { label: 'Sem anuncio', value: 'unlisted' },
+  { label: 'Sem anúncio', value: 'unlisted' },
 ];
 
 const sortOptions = [
@@ -71,7 +71,7 @@ export default function Products() {
               name: 'search',
               label: 'Buscar',
               type: 'search',
-              placeholder: 'Buscar nome, SKU, codigo do marketplace...',
+              placeholder: 'Buscar nome, SKU, código do marketplace...',
             },
             {
               name: 'marketplace',
@@ -142,8 +142,8 @@ export default function Products() {
                           </Link>
                         </td>
                         <td>{product.sku}</td>
-                        <td>{product.cost ? money(product.cost) : 'Nao informado'}</td>
-                        <td>{marketplaces.length ? marketplaces.join(', ') : 'Sem anuncio'}</td>
+                        <td>{product.cost ? money(product.cost) : 'Não informado'}</td>
+                        <td>{marketplaces.length ? marketplaces.join(', ') : 'Sem anúncio'}</td>
                         <td>{stock}</td>
                         <td>
                           <Stack direction="row" spacing={0.5} flexWrap="wrap">

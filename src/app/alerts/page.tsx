@@ -30,7 +30,7 @@ const severityOptions = [
 
 const statusOptions = [
   { label: 'Todos status', value: '' },
-  { label: 'Nao lidos', value: 'unread' },
+  { label: 'Não lidos', value: 'unread' },
   { label: 'Lidos', value: 'read' },
 ];
 
@@ -118,7 +118,7 @@ export default function Alerts() {
                     />
                     <Chip
                       size="small"
-                      label={alert.isRead ? 'Lido' : 'Nao lido'}
+                      label={alert.isRead ? 'Lido' : 'Não lido'}
                       variant="outlined"
                     />
                     <Typography className="muted" variant="caption">

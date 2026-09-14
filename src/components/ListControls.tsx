@@ -337,8 +337,8 @@ export function ResultsPagination({
 
 export const periodOptions = [
   { label: 'Hoje', value: 'today' },
-  { label: 'Ultimos 7 dias', value: '7d' },
-  { label: 'Ultimos 30 dias', value: '30d' },
+  { label: 'Últimos 7 dias', value: '7d' },
+  { label: 'Últimos 30 dias', value: '30d' },
   { label: 'Este mes', value: 'thisMonth' },
   { label: 'Mes passado', value: 'lastMonth' },
   { label: 'Personalizado', value: 'custom' },

@@ -65,7 +65,7 @@ export default function Dre() {
           DRE
         </Typography>
         <Alert severity="info" sx={{ mb: 2 }}>
-          DRE gerencial estimada - nao e um documento contabil oficial.
+          DRE gerencial estimada — não é um documento contábil oficial.
         </Alert>
 
         <ListFilters

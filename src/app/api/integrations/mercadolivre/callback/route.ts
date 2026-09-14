@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/integrations?provider=mercadolivre&status=syncing', request.url));
   } catch (error) {
     const reason = encodeURIComponent(
-      error instanceof Error ? error.message : 'Nao foi possivel concluir o OAuth',
+      error instanceof Error ? error.message : 'Não foi possível concluir o OAuth',
     );
     return NextResponse.redirect(
       new URL(`/integrations?provider=mercadolivre&status=error&reason=${reason}`, request.url),

@@ -28,9 +28,9 @@ const marginOptions = [
 ];
 
 const profitOptions = [
-  { label: 'Lucro e prejuizo', value: '' },
+  { label: 'Lucro e prejuízo', value: '' },
   { label: 'Com lucro', value: 'positive' },
-  { label: 'Com prejuizo', value: 'negative' },
+  { label: 'Com prejuízo', value: 'negative' },
 ];
 
 export default function Profitability() {

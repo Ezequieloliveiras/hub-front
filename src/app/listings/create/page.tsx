@@ -30,7 +30,7 @@ export default function CreateListingPage() {
       .then((response) => setMarketplaces(response.data))
       .catch(() => {
         setLoadError(
-          'A API de criacao de anuncios ainda nao esta disponivel no backend conectado. Atualize/reinicie o backend e tente novamente.',
+          'A API de criação de anúncios ainda não está disponível no backend conectado. Atualize ou reinicie o backend e tente novamente.',
         );
         setMarketplaces([]);
       });

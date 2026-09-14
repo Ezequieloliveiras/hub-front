@@ -37,7 +37,7 @@ const apps = [
   {
     name: 'Mercado Livre',
     provider: 'MERCADOLIVRE',
-    description: 'Sincronize pedidos, anuncios e custos da sua loja.',
+    description: 'Sincronize pedidos, anúncios e custos da sua loja.',
   },
   { name: 'Shopee', provider: 'SHOPEE', description: 'Marketplace preparado para Seller Pulse.' },
   { name: 'Amazon', provider: 'AMAZON', description: 'Marketplace preparado para Seller Pulse.' },
@@ -82,7 +82,7 @@ const defaultMercadoLivreConfig: MercadoLivreConfig = {
 };
 
 function formatDate(value?: string | null) {
-  if (!value) return 'Ainda nao sincronizado';
+  if (!value) return 'Ainda não sincronizado';
   return new Intl.DateTimeFormat('pt-BR', {
     dateStyle: 'short',
     timeStyle: 'short',
@@ -118,7 +118,7 @@ export default function Integrations() {
 
     if (status === 401) {
       localStorage.removeItem('token');
-      setMessage({ type: 'error', text: 'Sessao expirada. Entre novamente.' });
+      setMessage({ type: 'error', text: 'Sessão expirada. Entre novamente.' });
       window.setTimeout(() => window.location.assign('/login'), 800);
       return;
     }
@@ -126,7 +126,7 @@ export default function Integrations() {
     if (!axiosError.response) {
       setMessage({
         type: 'error',
-        text: 'Nao foi possivel conectar com a API. Confirme se o backend esta rodando na porta 4041.',
+        text: 'Não foi possível conectar à API. Confirme se o backend está em execução na porta 4041.',
       });
       return;
     }
@@ -139,7 +139,7 @@ export default function Integrations() {
       const { data } = await api.get('/integrations', { params: integrationParams });
       setIntegrations(data);
     } catch (error) {
-      handleRequestError(error, 'Nao foi possivel carregar as integracoes.');
+      handleRequestError(error, 'Não foi possível carregar as integrações.');
     }
   };
 
@@ -151,7 +151,7 @@ export default function Integrations() {
     if (provider === 'mercadolivre' && status === 'syncing') {
       setMessage({
         type: 'info',
-        text: 'Mercado Livre conectado. A primeira sincronizacao comecou automaticamente.',
+        text: 'Mercado Livre conectado. A primeira sincronização começou automaticamente.',
       });
       window.history.replaceState(null, '', '/integrations');
     }
@@ -159,7 +159,7 @@ export default function Integrations() {
     if (provider === 'mercadolivre' && status === 'error') {
       setMessage({
         type: 'error',
-        text: params.get('reason') || 'Nao foi possivel conectar o Mercado Livre.',
+        text: params.get('reason') || 'Não foi possível conectar o Mercado Livre.',
       });
       window.history.replaceState(null, '', '/integrations');
     }
@@ -172,7 +172,7 @@ export default function Integrations() {
     if (params.get('error') === 'mercadolivre') {
       setMessage({
         type: 'error',
-        text: 'Nao foi possivel conectar o Mercado Livre. Tente novamente.',
+        text: 'Não foi possível conectar o Mercado Livre. Tente novamente.',
       });
       window.history.replaceState(null, '', '/integrations');
     }
@@ -203,17 +203,17 @@ export default function Integrations() {
       return {
         label: 'Parcial',
         color: 'warning' as const,
-        helper: 'Conectado, mas parte da sincronizacao falhou.',
+        helper: 'Conectado, mas parte da sincronização falhou.',
       };
     }
     if (ml.syncStatus === 'ERROR') {
       return {
         label: 'Erro de sync',
         color: 'error' as const,
-        helper: 'Conectado, mas houve erro na sincronizacao.',
+        helper: 'Conectado, mas houve erro na sincronização.',
       };
     }
-    return { label: 'Conectado', color: 'success' as const, helper: 'Aguardando sincronizacao.' };
+    return { label: 'Conectado', color: 'success' as const, helper: 'Aguardando sincronização.' };
   }, [ml]);
 
   useEffect(() => {
@@ -233,7 +233,7 @@ export default function Integrations() {
       window.location.assign(data.authorizationUrl || data.url);
     } catch (error) {
       setConnecting(false);
-      handleRequestError(error, 'Nao foi possivel iniciar a conexao.');
+      handleRequestError(error, 'Não foi possível iniciar a conexão.');
     }
   };
 
@@ -248,7 +248,7 @@ export default function Integrations() {
         clientSecret: '',
       });
     } catch (error) {
-      handleRequestError(error, 'Nao foi possivel carregar a configuracao.');
+      handleRequestError(error, 'Não foi possível carregar a configuração.');
     } finally {
       setConfigLoading(false);
     }
@@ -266,7 +266,7 @@ export default function Integrations() {
       setMessage({ type: 'success', text: 'Configuracao do Mercado Livre salva.' });
       setConfigOpen(false);
     } catch (error) {
-      handleRequestError(error, 'Nao foi possivel salvar a configuracao.');
+      handleRequestError(error, 'Não foi possível salvar a configuração.');
     } finally {
       setConfigSaving(false);
     }
@@ -277,9 +277,9 @@ export default function Integrations() {
     try {
       await api.post('/integrations/mercadolivre/sync');
       await loadIntegrations();
-      setMessage({ type: 'success', text: 'Sincronizacao executada.' });
+      setMessage({ type: 'success', text: 'Sincronização executada.' });
     } catch (error) {
-      handleRequestError(error, 'Nao foi possivel sincronizar agora.');
+      handleRequestError(error, 'Não foi possível sincronizar agora.');
     } finally {
       setSyncing(false);
     }
@@ -291,7 +291,7 @@ export default function Integrations() {
       await loadIntegrations();
       setMessage({ type: 'success', text: 'Mercado Livre desconectado.' });
     } catch (error) {
-      handleRequestError(error, 'Nao foi possivel desconectar o Mercado Livre.');
+      handleRequestError(error, 'Não foi possível desconectar o Mercado Livre.');
     }
   };
 
@@ -300,7 +300,7 @@ export default function Integrations() {
       <div className="page">
         <Stack spacing={0.5} sx={{ mb: 3.5 }}>
           <Typography variant="h4" fontWeight={600}>
-            Integracoes
+            Integrações
           </Typography>
           <Typography className="muted">Conecte seus canais e centralize a operacao.</Typography>
         </Stack>
@@ -420,13 +420,13 @@ export default function Integrations() {
                           {chip.helper}
                         </Typography>
                         <Typography variant="caption" className="muted">
-                          Nickname: {mlMetadata.nickname || 'Nao informado'}
+                          Nickname: {mlMetadata.nickname || 'Não informado'}
                         </Typography>
                         <Typography variant="caption" className="muted">
-                          Seller ID: {ml.externalAccountId || 'Nao informado'}
+                          Seller ID: {ml.externalAccountId || 'Não informado'}
                         </Typography>
                         <Typography variant="caption" className="muted">
-                          Ultima sincronizacao: {formatDate(ml.lastSyncAt)}
+                          Última sincronização: {formatDate(ml.lastSyncAt)}
                         </Typography>
                         {ml.lastSyncError && (
                           <Typography variant="caption" color="error">

@@ -41,7 +41,7 @@ export default function Register() {
     }
 
     if (d.password !== d.confirmPassword) {
-      setErr('As senhas nao conferem.');
+      setErr('As senhas não conferem.');
       return;
     }
 
@@ -56,7 +56,7 @@ export default function Register() {
         return;
       }
 
-      setErr('Nao foi possivel criar a empresa. Verifique seus dados.');
+      setErr('Não foi possível criar a empresa. Verifique seus dados.');
     }
   }
 
@@ -126,7 +126,7 @@ export default function Register() {
             margin="normal"
             value={d.confirmPassword}
             error={passwordMismatch}
-            helperText={passwordMismatch ? 'As senhas nao conferem.' : ''}
+            helperText={passwordMismatch ? 'As senhas não conferem.' : ''}
             onChange={(e) => setD({ ...d, confirmPassword: e.target.value })}
             InputProps={{ endAdornment: passwordAdornment }}
           />
