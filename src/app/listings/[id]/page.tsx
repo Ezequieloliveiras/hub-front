@@ -37,6 +37,7 @@ import {
   PauseCircle,
   PhotoCamera,
   PlayCircle,
+  Storefront,
   Sync,
   WarningAmber,
 } from '@mui/icons-material';
@@ -75,6 +76,8 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
   const [loadingListingTypes, setLoadingListingTypes] = useState(false);
   const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
+  const [publicationTargets, setPublicationTargets] = useState<any[]>([]);
+  const [loadingPublicationTargets, setLoadingPublicationTargets] = useState(false);
   const [form, setForm] = useState({
     title: '',
     price: '',
@@ -176,8 +179,21 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
       setImageFailed(false);
       loadListingTypeOptions(listingId);
       loadCategoryOptions(listingId);
+      loadPublicationTargets(listingId);
     } catch {
       setErr('Não foi possível carregar este anúncio.');
+    }
+  };
+
+  const loadPublicationTargets = async (listingId: string) => {
+    setLoadingPublicationTargets(true);
+    try {
+      const response = await api.get(`/listings/${listingId}/publication-targets`);
+      setPublicationTargets(Array.isArray(response.data) ? response.data : []);
+    } catch {
+      setPublicationTargets([]);
+    } finally {
+      setLoadingPublicationTargets(false);
     }
   };
 
@@ -287,10 +303,21 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
     );
   };
 
+  const createPublicationDraft = async (marketplace: string, name: string) => {
+    await run(
+      `draft-${marketplace}`,
+      async () => {
+        await api.post(`/listings/${id}/drafts`, { marketplace });
+        await loadPublicationTargets(id);
+      },
+      `Rascunho pré-preenchido criado para ${name}.`,
+    );
+  };
+
   const confirmCopy = {
     pause: {
       title: 'Pausar anúncio',
-      text: 'Enquanto estiver pausado, ele deixara de ficar disponivel para novas vendas no Mercado Livre.',
+      text: 'Enquanto estiver pausado, ele deixará de ficar disponível para novas vendas no Mercado Livre.',
       action: 'Pausar anúncio',
       loading: 'Pausando...',
     },
@@ -411,6 +438,80 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
             ))}
           </Stack>
         )}
+
+        <Card sx={{ mb: 2 }}>
+          <CardContent>
+            <Typography fontWeight={600}>Publicar em outros marketplaces</Typography>
+            <Typography className="muted" variant="body2" mt={0.5} mb={2}>
+              Os dados principais deste produto podem ser reaproveitados. Categoria, atributos,
+              preço e estoque são revisados separadamente em cada canal.
+            </Typography>
+            {loadingPublicationTargets ? (
+              <CircularProgress size={24} />
+            ) : (
+              <Grid container spacing={2}>
+                {publicationTargets.map((target) => (
+                  <Grid item xs={12} sm={6} md={4} key={target.marketplace}>
+                    <Card variant="outlined" sx={{ height: '100%' }}>
+                      <CardContent>
+                        <Stack spacing={1.5} height="100%">
+                          <Stack direction="row" justifyContent="space-between" alignItems="center">
+                            <Stack direction="row" spacing={1} alignItems="center">
+                              <Storefront color="primary" fontSize="small" />
+                              <Typography fontWeight={600}>{target.name}</Typography>
+                            </Stack>
+                            <Chip
+                              size="small"
+                              color={target.published ? 'success' : target.connected ? 'default' : 'warning'}
+                              label={
+                                target.published
+                                  ? 'Publicado'
+                                  : target.connected
+                                    ? target.ready
+                                      ? 'Pronto'
+                                      : 'Em breve'
+                                    : 'Não conectado'
+                              }
+                            />
+                          </Stack>
+                          <Typography className="muted" variant="body2" sx={{ flexGrow: 1 }}>
+                            {target.published
+                              ? `Anúncio ${target.externalId || ''}`
+                              : target.message ||
+                                'Revise os dados específicos antes de publicar neste marketplace.'}
+                          </Typography>
+                          {target.published ? (
+                            <Button component={Link} href={`/listings/${target.listingId}`} size="small">
+                              Ver anúncio
+                            </Button>
+                          ) : !target.connected ? (
+                            <Button component={Link} href="/integrations" size="small">
+                              Conectar
+                            </Button>
+                          ) : target.canCreateDraft ? (
+                            <Button
+                              variant="contained"
+                              size="small"
+                              disabled={isBusy}
+                              startIcon={<PlayCircle />}
+                              onClick={() => createPublicationDraft(target.marketplace, target.name)}
+                            >
+                              Criar rascunho
+                            </Button>
+                          ) : (
+                            <Button size="small" disabled>
+                              Indisponível agora
+                            </Button>
+                          )}
+                        </Stack>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            )}
+          </CardContent>
+        </Card>
 
         <Grid container spacing={2}>
           <Grid item xs={12} lg={7}>
@@ -541,10 +642,10 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
             <Card>
               <CardContent>
                 <Typography fontWeight={600} mb={2}>
-                  Historico de acoes
+                  Histórico de ações
                 </Typography>
                 {!listing.actionLogs?.length ? (
-                  <Typography className="muted">Nenhuma acao registrada ainda.</Typography>
+                  <Typography className="muted">Nenhuma ação registrada ainda.</Typography>
                 ) : (
                   <Stack spacing={2}>
                     {listing.actionLogs.map((log: any) => (
