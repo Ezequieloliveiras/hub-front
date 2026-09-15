@@ -15,9 +15,11 @@ export type MercadoLivreListingDraft = {
   categoryName: string;
   condition: string;
   listingTypeId: string;
+  listingMode: 'simple' | 'variations';
   price: string;
   quantity: string;
   pictures: string[];
+  variations: MercadoLivreVariationDraft[];
   attributes: Record<string, string>;
   shipping: {
     mode: string;
@@ -28,6 +30,24 @@ export type MercadoLivreListingDraft = {
   catalogProductId: string;
 };
 
+export type MercadoLivreVariationDraft = {
+  attributeCombinations: Record<string, string>;
+  price: string;
+  quantity: string;
+  sku: string;
+  pictureIds: string[];
+  attributes: Record<string, string>;
+};
+
+export const emptyMercadoLivreVariationDraft: MercadoLivreVariationDraft = {
+  attributeCombinations: {},
+  price: '0,00',
+  quantity: '1',
+  sku: '',
+  pictureIds: [''],
+  attributes: {},
+};
+
 export const emptyMercadoLivreDraft: MercadoLivreListingDraft = {
   title: '',
   sku: '',
@@ -36,9 +56,11 @@ export const emptyMercadoLivreDraft: MercadoLivreListingDraft = {
   categoryName: '',
   condition: 'new',
   listingTypeId: 'gold_special',
+  listingMode: 'simple',
   price: '0,00',
   quantity: '1',
   pictures: [''],
+  variations: [],
   attributes: {},
   shipping: {
     mode: 'me2',

@@ -24,11 +24,14 @@ import {
   StepLabel,
   Stepper,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from '@mui/material';
 import { Add, DeleteOutline, ExpandMore, Publish, Save } from '@mui/icons-material';
 import { api, money } from '@/lib/api';
 import {
+  emptyMercadoLivreVariationDraft,
   emptyMercadoLivreDraft,
   MercadoLivreAttribute,
   MercadoLivreListingDraft,
@@ -106,6 +109,24 @@ export default function MercadoLivreListingForm({ integrationId }: { integration
           ),
       ),
     [metadata],
+  );
+  const variationAttributes: MercadoLivreAttribute[] = useMemo(
+    () =>
+      (metadata?.variationAttributes?.length
+        ? metadata.variationAttributes
+        : (metadata?.attributes || []).filter(
+            (attribute: any) => attribute?.tags?.variation_attribute,
+          )
+      ).slice(0, 3),
+    [metadata],
+  );
+  const totalVariationStock = useMemo(
+    () =>
+      draft.variations.reduce(
+        (total, variation) => total + Math.max(0, Number(variation.quantity || 0)),
+        0,
+      ),
+    [draft.variations],
   );
   const listingTypes = metadata?.listingTypes?.length
     ? metadata.listingTypes
@@ -313,6 +334,75 @@ export default function MercadoLivreListingForm({ integrationId }: { integration
     setDraft((current) => ({
       ...current,
       attributes: { ...current.attributes, [id]: value },
+    }));
+  };
+
+  const updateVariation = (index: number, patch: Partial<(typeof draft.variations)[number]>) => {
+    setDraft((current) => ({
+      ...current,
+      variations: current.variations.map((variation, itemIndex) =>
+        itemIndex === index ? { ...variation, ...patch } : variation,
+      ),
+    }));
+  };
+
+  const setVariationCombination = (index: number, attributeId: string, value: string) => {
+    setDraft((current) => ({
+      ...current,
+      variations: current.variations.map((variation, itemIndex) =>
+        itemIndex === index
+          ? {
+              ...variation,
+              attributeCombinations: {
+                ...variation.attributeCombinations,
+                [attributeId]: value,
+              },
+            }
+          : variation,
+      ),
+    }));
+  };
+
+  const addVariation = (seed: Partial<typeof emptyMercadoLivreVariationDraft> = {}) => {
+    setDraft((current) => ({
+      ...current,
+      listingMode: 'variations',
+      variations: [
+        ...current.variations,
+        {
+          ...emptyMercadoLivreVariationDraft,
+          price: current.price || '0,00',
+          pictureIds: current.pictures.filter(Boolean).slice(0, 1),
+          ...seed,
+        },
+      ],
+    }));
+  };
+
+  const generateVariations = () => {
+    const attribute =
+      variationAttributes.find((item) => item.values?.length) || variationAttributes[0];
+    if (!attribute?.id) {
+      addVariation();
+      return;
+    }
+
+    const values = (attribute.values || []).slice(0, 12);
+    if (!values.length) {
+      addVariation({ attributeCombinations: { [attribute.id]: '' } });
+      return;
+    }
+
+    setDraft((current) => ({
+      ...current,
+      listingMode: 'variations',
+      variations: values.map((value) => ({
+        ...emptyMercadoLivreVariationDraft,
+        attributeCombinations: { [attribute.id]: value.name },
+        price: current.price || '0,00',
+        quantity: '1',
+        pictureIds: current.pictures.filter(Boolean).slice(0, 1),
+      })),
     }));
   };
 
@@ -557,6 +647,36 @@ export default function MercadoLivreListingForm({ integrationId }: { integration
 
           {activeStep === 3 && (
             <Stack spacing={2}>
+              <Box>
+                <Typography fontWeight={600} mb={1}>
+                  Estrutura do anuncio
+                </Typography>
+                <ToggleButtonGroup
+                  exclusive
+                  size="small"
+                  value={draft.listingMode}
+                  onChange={(_, value) => {
+                    if (!value) return;
+                    setDraft({
+                      ...draft,
+                      listingMode: value,
+                      variations:
+                        value === 'variations' && !draft.variations.length
+                          ? [
+                              {
+                                ...emptyMercadoLivreVariationDraft,
+                                price: draft.price,
+                                pictureIds: draft.pictures.filter(Boolean).slice(0, 1),
+                              },
+                            ]
+                          : draft.variations,
+                    });
+                  }}
+                >
+                  <ToggleButton value="simple">Simples</ToggleButton>
+                  <ToggleButton value="variations">Com variacoes</ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <TextField
@@ -577,6 +697,12 @@ export default function MercadoLivreListingForm({ integrationId }: { integration
                     fullWidth
                     type="number"
                     label="Estoque"
+                    disabled={draft.listingMode === 'variations'}
+                    helperText={
+                      draft.listingMode === 'variations'
+                        ? 'No modo com variacoes, o estoque vem das linhas abaixo.'
+                        : ''
+                    }
                     value={draft.quantity}
                     onChange={(event) => setDraft({ ...draft, quantity: event.target.value })}
                   />
@@ -626,6 +752,134 @@ export default function MercadoLivreListingForm({ integrationId }: { integration
                   </Stack>
                 </Grid>
               </Grid>
+              {draft.listingMode === 'variations' && (
+                <Box>
+                  <Stack
+                    direction={{ xs: 'column', sm: 'row' }}
+                    justifyContent="space-between"
+                    alignItems={{ xs: 'stretch', sm: 'center' }}
+                    spacing={1}
+                    mb={1}
+                  >
+                    <Box>
+                      <Typography fontWeight={600}>Variacoes</Typography>
+                      <Typography className="muted" variant="body2">
+                        Cada linha vira uma opcao compravel no mesmo anuncio. Estoque total:{' '}
+                        <strong>{totalVariationStock}</strong>
+                      </Typography>
+                    </Box>
+                    <Stack direction="row" spacing={1}>
+                      <Button size="small" variant="outlined" onClick={generateVariations}>
+                        Gerar opcoes
+                      </Button>
+                      <Button size="small" startIcon={<Add />} onClick={() => addVariation()}>
+                        Adicionar
+                      </Button>
+                    </Stack>
+                  </Stack>
+                  {!variationAttributes.length && (
+                    <Alert severity="warning" sx={{ mb: 1 }}>
+                      Escolha a categoria antes de montar as variacoes.
+                    </Alert>
+                  )}
+                  <Stack spacing={1.5}>
+                    {draft.variations.map((variation, index) => (
+                      <Box
+                        key={index}
+                        sx={{ border: 1, borderColor: 'divider', borderRadius: 2, p: 1.5 }}
+                      >
+                        <Stack
+                          direction={{ xs: 'column', md: 'row' }}
+                          spacing={1.5}
+                          alignItems={{ xs: 'stretch', md: 'flex-start' }}
+                        >
+                          <Grid container spacing={1.5} flex={1}>
+                            {variationAttributes.map((attribute) => (
+                              <Grid item xs={12} sm={6} md={3} key={attribute.id}>
+                                <AttributeField
+                                  attribute={attribute}
+                                  value={variation.attributeCombinations[attribute.id] || ''}
+                                  onChange={(value) =>
+                                    setVariationCombination(index, attribute.id, value)
+                                  }
+                                />
+                              </Grid>
+                            ))}
+                            <Grid item xs={12} sm={6} md={2}>
+                              <TextField
+                                fullWidth
+                                label="Preco"
+                                value={variation.price}
+                                InputProps={{
+                                  startAdornment: <Typography mr={1}>R$</Typography>,
+                                }}
+                                onChange={(event) =>
+                                  updateVariation(index, {
+                                    price: formatBrazilianMoneyFromDigits(event.target.value),
+                                  })
+                                }
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={2}>
+                              <TextField
+                                fullWidth
+                                type="number"
+                                label="Estoque"
+                                value={variation.quantity}
+                                onChange={(event) =>
+                                  updateVariation(index, { quantity: event.target.value })
+                                }
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={2}>
+                              <TextField
+                                fullWidth
+                                label="SKU"
+                                value={variation.sku}
+                                onChange={(event) =>
+                                  updateVariation(index, { sku: event.target.value })
+                                }
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={3}>
+                              <TextField
+                                select
+                                fullWidth
+                                label="Imagem"
+                                value={variation.pictureIds[0] || ''}
+                                onChange={(event) =>
+                                  updateVariation(index, { pictureIds: [event.target.value] })
+                                }
+                              >
+                                <MenuItem value="">Selecionar</MenuItem>
+                                {draft.pictures.filter(Boolean).map((picture, pictureIndex) => (
+                                  <MenuItem key={`${picture}-${pictureIndex}`} value={picture}>
+                                    Imagem {pictureIndex + 1}
+                                  </MenuItem>
+                                ))}
+                              </TextField>
+                            </Grid>
+                          </Grid>
+                          <IconButton
+                            aria-label="Remover variacao"
+                            disabled={draft.variations.length === 1}
+                            onClick={() =>
+                              setDraft({
+                                ...draft,
+                                variations: draft.variations.filter(
+                                  (_, itemIndex) => itemIndex !== index,
+                                ),
+                              })
+                            }
+                          >
+                            <DeleteOutline />
+                          </IconButton>
+                        </Stack>
+                      </Box>
+                    ))}
+                  </Stack>
+                </Box>
+              )}
               <Divider />
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <FormControlLabel
@@ -677,10 +931,41 @@ export default function MercadoLivreListingForm({ integrationId }: { integration
                 <Review label="Título" value={draft.title} />
                 <Review label="Categoria" value={draft.categoryName || draft.categoryId} />
                 <Review label="Preço" value={money(parseBrazilianMoney(draft.price))} />
-                <Review label="Estoque" value={draft.quantity} />
+                <Review
+                  label="Estoque"
+                  value={
+                    draft.listingMode === 'variations'
+                      ? `${totalVariationStock} em ${draft.variations.length} variacoes`
+                      : draft.quantity
+                  }
+                />
                 <Review label="Tipo" value={draft.listingTypeId} />
                 <Review label="Condição" value={draft.condition === 'new' ? 'Novo' : 'Usado'} />
               </Grid>
+              {draft.listingMode === 'variations' && (
+                <Box>
+                  <Typography fontWeight={600} mb={1}>
+                    Variacoes
+                  </Typography>
+                  <Stack spacing={1}>
+                    {draft.variations.map((variation, index) => (
+                      <Box
+                        key={index}
+                        sx={{ border: 1, borderColor: 'divider', borderRadius: 2, p: 1.25 }}
+                      >
+                        <Typography fontWeight={600}>
+                          {formatVariationName(variation.attributeCombinations) ||
+                            `Variacao ${index + 1}`}
+                        </Typography>
+                        <Typography className="muted" variant="body2">
+                          {money(parseBrazilianMoney(variation.price))} - {variation.quantity} un.
+                          {variation.sku ? ` - SKU ${variation.sku}` : ''}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Stack>
+                </Box>
+              )}
               {catalogOptions.length > 0 && (
                 <Alert severity="info">
                   Encontramos {catalogOptions.length}{' '}
@@ -793,4 +1078,11 @@ function Review({ label, value }: { label: string; value: any }) {
       <Typography fontWeight={600}>{value || '-'}</Typography>
     </Grid>
   );
+}
+
+function formatVariationName(attributeCombinations: Record<string, string>) {
+  return Object.entries(attributeCombinations || {})
+    .filter(([, value]) => Boolean(value))
+    .map(([id, value]) => `${id}: ${value}`)
+    .join(' / ');
 }

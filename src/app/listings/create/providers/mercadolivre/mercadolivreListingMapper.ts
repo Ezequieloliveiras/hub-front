@@ -21,6 +21,7 @@ export function toListingDraftPayload(
   productId: string,
   draft: MercadoLivreListingDraft,
 ) {
+  const isVariationListing = draft.listingMode === 'variations';
   return {
     marketplace,
     integrationId,
@@ -29,8 +30,18 @@ export function toListingDraftPayload(
     data: {
       ...draft,
       price: parseBrazilianMoney(draft.price),
-      quantity: Number(draft.quantity || 0),
+      quantity: isVariationListing ? undefined : Number(draft.quantity || 0),
       pictures: draft.pictures.map((picture) => picture.trim()).filter(Boolean),
+      variations: isVariationListing
+        ? draft.variations.map((variation) => ({
+            attributeCombinations: variation.attributeCombinations,
+            price: parseBrazilianMoney(variation.price || draft.price),
+            quantity: Number(variation.quantity || 0),
+            sku: variation.sku || undefined,
+            pictureIds: variation.pictureIds.map((picture) => picture.trim()).filter(Boolean),
+            attributes: variation.attributes,
+          }))
+        : [],
     },
   };
 }

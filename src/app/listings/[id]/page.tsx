@@ -48,6 +48,14 @@ import { api, money } from '@/lib/api';
 type ConfirmAction = 'pause' | 'activate' | 'close' | null;
 type ListingTypeOption = { id: string; name: string; current?: boolean };
 type CategoryOption = { id: string; name: string; current?: boolean };
+type VariationEdit = {
+  id?: string;
+  attributeCombinations: Record<string, string>;
+  price: string;
+  quantity: string;
+  sku: string;
+  pictureIds: string[];
+};
 
 const statusLabel: Record<string, string> = {
   active: 'Ativo',
@@ -72,6 +80,9 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
   const [imageFailed, setImageFailed] = useState(false);
   const [imageOpen, setImageOpen] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState('');
+  const [variationOpen, setVariationOpen] = useState(false);
+  const [variationForm, setVariationForm] = useState<VariationEdit[]>([]);
+  const [variationAttributes, setVariationAttributes] = useState<any[]>([]);
   const [listingTypeOptions, setListingTypeOptions] = useState<ListingTypeOption[]>([]);
   const [loadingListingTypes, setLoadingListingTypes] = useState(false);
   const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
@@ -103,6 +114,7 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
         : [],
     [raw],
   );
+  const rawVariations = useMemo(() => (Array.isArray(raw.variations) ? raw.variations : []), [raw]);
   const productImageUrl = normalizeMercadoLivreImageUrl(listing?.product?.imageUrl);
   const imageUrl = !imageFailed
     ? rawPictureUrls[0] || normalizeMercadoLivreImageUrl(listing?.imageUrl) || productImageUrl
@@ -221,6 +233,23 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
     }
   };
 
+  const loadVariationAttributes = async (categoryId: string) => {
+    if (!categoryId) return;
+    try {
+      const response = await api.get(
+        `/listing-creation/mercadolivre/categories/${categoryId}/metadata`,
+      );
+      const attributes = response.data?.variationAttributes?.length
+        ? response.data.variationAttributes
+        : (response.data?.attributes || []).filter(
+            (attribute: any) => attribute?.tags?.variation_attribute,
+          );
+      setVariationAttributes(Array.isArray(attributes) ? attributes.slice(0, 3) : []);
+    } catch {
+      setVariationAttributes([]);
+    }
+  };
+
   useEffect(() => {
     let active = true;
 
@@ -300,6 +329,95 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
         setEditOpen(false);
       },
       'Anúncio atualizado com sucesso.',
+    );
+  };
+
+  const openVariationEditor = async () => {
+    await loadVariationAttributes(raw.category_id || form.categoryId);
+    const existing = rawVariations.map((variation: any) => ({
+      id: variation.id ? String(variation.id) : undefined,
+      attributeCombinations: Object.fromEntries(
+        (variation.attribute_combinations || []).map((attribute: any) => [
+          attribute.id || attribute.name || 'COLOR',
+          attribute.value_name || attribute.value_id || '',
+        ]),
+      ),
+      price: formatBrazilianCurrencyInput(variation.price || listing.price),
+      quantity: String(variation.available_quantity ?? 0),
+      sku: variation.seller_custom_field || '',
+      pictureIds: Array.isArray(variation.picture_ids) ? variation.picture_ids.slice(0, 1) : [''],
+    }));
+    setVariationForm(
+      existing.length
+        ? existing
+        : [
+            {
+              attributeCombinations: { COLOR: '' },
+              price: formatBrazilianCurrencyInput(listing.price),
+              quantity: String(listing.availableQuantity || 0),
+              sku: listing.externalSku || '',
+              pictureIds: currentPictureUrls.slice(0, 1),
+            },
+          ],
+    );
+    setVariationOpen(true);
+  };
+
+  const updateVariation = (index: number, patch: Partial<VariationEdit>) => {
+    setVariationForm((current) =>
+      current.map((variation, itemIndex) =>
+        itemIndex === index ? { ...variation, ...patch } : variation,
+      ),
+    );
+  };
+
+  const setVariationCombination = (index: number, attributeId: string, value: string) => {
+    setVariationForm((current) =>
+      current.map((variation, itemIndex) =>
+        itemIndex === index
+          ? {
+              ...variation,
+              attributeCombinations: {
+                ...variation.attributeCombinations,
+                [attributeId]: value,
+              },
+            }
+          : variation,
+      ),
+    );
+  };
+
+  const addVariation = () => {
+    const attributeId = variationAttributes[0]?.id || 'COLOR';
+    setVariationForm((current) => [
+      ...current,
+      {
+        attributeCombinations: { [attributeId]: '' },
+        price: formatBrazilianCurrencyInput(listing.price),
+        quantity: '1',
+        sku: '',
+        pictureIds: currentPictureUrls.slice(0, 1),
+      },
+    ]);
+  };
+
+  const saveVariations = async () => {
+    await run(
+      'variations',
+      async () => {
+        await api.patch(`/listings/${id}/variations`, {
+          variations: variationForm.map((variation) => ({
+            id: variation.id,
+            attributeCombinations: variation.attributeCombinations,
+            price: parseBrazilianCurrencyInput(variation.price),
+            quantity: Number(variation.quantity || 0),
+            sku: variation.sku || undefined,
+            pictureIds: variation.pictureIds.filter(Boolean),
+          })),
+        });
+        setVariationOpen(false);
+      },
+      'Variacoes atualizadas com sucesso.',
     );
   };
 
@@ -462,7 +580,13 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                             </Stack>
                             <Chip
                               size="small"
-                              color={target.published ? 'success' : target.connected ? 'default' : 'warning'}
+                              color={
+                                target.published
+                                  ? 'success'
+                                  : target.connected
+                                    ? 'default'
+                                    : 'warning'
+                              }
                               label={
                                 target.published
                                   ? 'Publicado'
@@ -481,7 +605,11 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                                 'Revise os dados específicos antes de publicar neste marketplace.'}
                           </Typography>
                           {target.published ? (
-                            <Button component={Link} href={`/listings/${target.listingId}`} size="small">
+                            <Button
+                              component={Link}
+                              href={`/listings/${target.listingId}`}
+                              size="small"
+                            >
                               Ver anúncio
                             </Button>
                           ) : !target.connected ? (
@@ -494,7 +622,9 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                               size="small"
                               disabled={isBusy}
                               startIcon={<PlayCircle />}
-                              onClick={() => createPublicationDraft(target.marketplace, target.name)}
+                              onClick={() =>
+                                createPublicationDraft(target.marketplace, target.name)
+                              }
                             >
                               Criar rascunho
                             </Button>
@@ -634,6 +764,62 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
                     info="Lucro estimado dos últimos 30 dias dividido pelo faturamento do mesmo período."
                   />
                 </Grid>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12}>
+            <Card>
+              <CardContent>
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  justifyContent="space-between"
+                  alignItems={{ xs: 'stretch', sm: 'center' }}
+                  spacing={1.5}
+                  mb={2}
+                >
+                  <Box>
+                    <Typography fontWeight={600}>Variações</Typography>
+                    <Typography className="muted" variant="body2">
+                      Agrupe cor, tamanho ou voltagem no mesmo anúncio.
+                    </Typography>
+                  </Box>
+                  <Button variant="outlined" startIcon={<Add />} onClick={openVariationEditor}>
+                    {rawVariations.length ? 'Editar variações' : 'Transformar em variações'}
+                  </Button>
+                </Stack>
+                {!rawVariations.length ? (
+                  <Alert severity="info">
+                    Este anúncio ainda é simples. Você pode criar as primeiras variações mantendo o
+                    anúncio atual.
+                  </Alert>
+                ) : (
+                  <Grid container spacing={1.5}>
+                    {rawVariations.map((variation: any) => (
+                      <Grid item xs={12} md={6} key={variation.id}>
+                        <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2, p: 1.5 }}>
+                          <Typography fontWeight={600}>
+                            {formatVariationName(
+                              Object.fromEntries(
+                                (variation.attribute_combinations || []).map((attribute: any) => [
+                                  attribute.id || attribute.name || 'VAR',
+                                  attribute.value_name || attribute.value_id || '',
+                                ]),
+                              ),
+                            ) || `Variação ${variation.id}`}
+                          </Typography>
+                          <Typography className="muted" variant="body2">
+                            {money(Number(variation.price || listing.price))} -{' '}
+                            {variation.available_quantity ?? 0} un.
+                            {variation.seller_custom_field
+                              ? ` - SKU ${variation.seller_custom_field}`
+                              : ''}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    ))}
+                  </Grid>
+                )}
               </CardContent>
             </Card>
           </Grid>
@@ -964,6 +1150,158 @@ export default function ListingDetail({ params }: { params: Promise<{ id: string
           </DialogActions>
         </Dialog>
 
+        <Dialog
+          open={variationOpen}
+          onClose={() => {
+            if (loadingAction !== 'variations') setVariationOpen(false);
+          }}
+          fullWidth
+          maxWidth="lg"
+        >
+          <DialogTitle>Variações do anúncio</DialogTitle>
+          <DialogContent>
+            <Stack spacing={2} mt={1}>
+              <Alert severity="info">
+                Ao salvar, as variações existentes são preservadas. Para remover variações, use uma
+                rotina específica com revisão manual.
+              </Alert>
+              <Stack direction="row" justifyContent="space-between" alignItems="center">
+                <Typography className="muted">
+                  {variationForm.length} variação(ões) nesta edição
+                </Typography>
+                <Button startIcon={<Add />} onClick={addVariation}>
+                  Adicionar variação
+                </Button>
+              </Stack>
+              <Stack spacing={1.5}>
+                {variationForm.map((variation, index) => {
+                  const attributes = variationAttributes.length
+                    ? variationAttributes
+                    : [
+                        {
+                          id: Object.keys(variation.attributeCombinations)[0] || 'COLOR',
+                          name: 'Cor',
+                        },
+                      ];
+
+                  return (
+                    <Box
+                      key={`${variation.id || 'new'}-${index}`}
+                      sx={{ border: 1, borderColor: 'divider', borderRadius: 2, p: 1.5 }}
+                    >
+                      <Stack
+                        direction={{ xs: 'column', md: 'row' }}
+                        spacing={1.5}
+                        alignItems={{ xs: 'stretch', md: 'flex-start' }}
+                      >
+                        <Grid container spacing={1.5} flex={1}>
+                          {attributes.map((attribute: any) => (
+                            <Grid item xs={12} sm={6} md={3} key={attribute.id}>
+                              <VariationAttributeField
+                                attribute={attribute}
+                                value={variation.attributeCombinations[attribute.id] || ''}
+                                onChange={(value) =>
+                                  setVariationCombination(index, attribute.id, value)
+                                }
+                              />
+                            </Grid>
+                          ))}
+                          <Grid item xs={12} sm={6} md={2}>
+                            <TextField
+                              fullWidth
+                              label="Preço"
+                              value={variation.price}
+                              inputMode="decimal"
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">R$</InputAdornment>
+                                ),
+                              }}
+                              onChange={(event) =>
+                                updateVariation(index, {
+                                  price: formatBrazilianCurrencyFromDigits(event.target.value),
+                                })
+                              }
+                            />
+                          </Grid>
+                          <Grid item xs={12} sm={6} md={2}>
+                            <TextField
+                              fullWidth
+                              type="number"
+                              label="Estoque"
+                              value={variation.quantity}
+                              onChange={(event) =>
+                                updateVariation(index, { quantity: event.target.value })
+                              }
+                            />
+                          </Grid>
+                          <Grid item xs={12} sm={6} md={2}>
+                            <TextField
+                              fullWidth
+                              label="SKU"
+                              value={variation.sku}
+                              onChange={(event) =>
+                                updateVariation(index, { sku: event.target.value })
+                              }
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={3}>
+                            <TextField
+                              select
+                              fullWidth
+                              label="Imagem"
+                              value={variation.pictureIds[0] || ''}
+                              onChange={(event) =>
+                                updateVariation(index, { pictureIds: [event.target.value] })
+                              }
+                            >
+                              <MenuItem value="">Selecionar</MenuItem>
+                              {currentPictureUrls.map((picture: string, pictureIndex: number) => (
+                                <MenuItem key={`${picture}-${pictureIndex}`} value={picture}>
+                                  Imagem {pictureIndex + 1}
+                                </MenuItem>
+                              ))}
+                            </TextField>
+                          </Grid>
+                        </Grid>
+                        <IconButton
+                          aria-label="Remover variação"
+                          disabled={variationForm.length === 1 || Boolean(variation.id)}
+                          onClick={() =>
+                            setVariationForm((current) =>
+                              current.filter((_, itemIndex) => itemIndex !== index),
+                            )
+                          }
+                        >
+                          <DeleteOutline />
+                        </IconButton>
+                      </Stack>
+                    </Box>
+                  );
+                })}
+              </Stack>
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              disabled={loadingAction === 'variations'}
+              onClick={() => setVariationOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={
+                loadingAction === 'variations' ? <CircularProgress size={16} /> : undefined
+              }
+              disabled={loadingAction === 'variations'}
+              onClick={saveVariations}
+            >
+              {loadingAction === 'variations' ? 'Salvando...' : 'Salvar variações'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
         <Dialog open={Boolean(confirmAction)} onClose={closeConfirmAction} fullWidth maxWidth="xs">
           {confirmAction && (
             <>
@@ -1094,6 +1432,7 @@ function formatAction(log: any) {
     PICTURES_UPDATED: 'Imagens atualizadas',
     LISTING_TYPE_UPDATED: 'Tipo de anúncio alterado',
     CATEGORY_UPDATED: 'Categoria alterada',
+    VARIATIONS_UPDATED: 'Variações atualizadas',
     PAUSED: 'Anúncio pausado',
     ACTIVATED: 'Anúncio reativado',
     CLOSED: 'Anúncio encerrado',
@@ -1122,8 +1461,55 @@ function formatChange(log: any) {
   if (log.action === 'CATEGORY_UPDATED') {
     return `${oldValue.categoryId || '--'} -> ${newValue.category_id}`;
   }
+  if (log.action === 'VARIATIONS_UPDATED') {
+    return `${newValue.variations?.length || 0} variação(ões) enviada(s) ao Mercado Livre`;
+  }
   if (newValue.status) return `Status: ${oldValue.status || '--'} -> ${newValue.status}`;
   return '';
+}
+
+function VariationAttributeField({
+  attribute,
+  value,
+  onChange,
+}: {
+  attribute: any;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  if (attribute.values?.length) {
+    return (
+      <TextField
+        select
+        fullWidth
+        label={attribute.name || attribute.id}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        {attribute.values.map((item: any) => (
+          <MenuItem key={item.id || item.name} value={item.name}>
+            {item.name}
+          </MenuItem>
+        ))}
+      </TextField>
+    );
+  }
+
+  return (
+    <TextField
+      fullWidth
+      label={attribute.name || attribute.id}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+    />
+  );
+}
+
+function formatVariationName(attributeCombinations: Record<string, string>) {
+  return Object.entries(attributeCombinations || {})
+    .filter(([, value]) => Boolean(value))
+    .map(([id, value]) => `${id}: ${value}`)
+    .join(' / ');
 }
 
 function normalizeMercadoLivreImageUrl(value?: string) {
